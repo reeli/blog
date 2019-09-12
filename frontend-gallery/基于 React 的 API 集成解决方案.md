@@ -1,4 +1,4 @@
-# 基于 React 的 API 集成解决方案
+# 基于 React 和 Redux 的 API 集成解决方案
 
 
 
@@ -314,19 +314,6 @@ const [requestA] = useRequest(A, {
 
 
 
-### 1.3.2 实际场景
-处理 Request Action 以及它裂变出来的 action。
-
-loading
-
-API 去重
-
-Analytics
-
-useSearch
-
-
-
 # 2. 存储并使用请求响应的数据
 
 对于 API Response 这一类数据，我们应该如何存储呢？由于不同的 API Response 数据对应用有着不同的作用，因此我们可以抽象出对应的数据模型，然后分类存储。就像我们收纳生活用品一样，第一个抽屉放餐具，第二个抽屉放零食......
@@ -447,55 +434,17 @@ useEffect(() => {
 
 # 3. 自动生成代码
 
-- 排序
-- 请求参数的校验
-- 多人协作开发
+
+
+利用代码生成工具，我们可以通过 swagger 文档自动生成 request  action creator 以及接口定义。并且，每一次都会用服务端最新的 swagger json 来生成代码。这在接口变更时非常有用，只需要一行命令，就可以更新接口定义，然后通过 TypeScript 的报错提示，依次修改使用的地方即可。
+
+同一个 swagger 生成的代码我们会放到同一个文件里。在多人协作时，为了避免冲突，我们会将生成的 request action creator 以及接口定义按照字母顺序进行排序，并且每一次生成的文件都会覆盖之前的文件。因此，我们在项目上还硬性规定了：生成的文件只能自动生成，不能够手动修改。
 
 
 
+# 4. 最后
 
 
 
-
-
-Q:
-
-连续发起多个请求 A, B, C，只保留最后一次请求。这个场景在自动完成组件中很常见，用户每输入一个字符就会发起一次请求，连续输入时，只保留最后一次。（如果请求足够快，还是需要 debounce?）
-
-`deps` 作为第三个参数，当它发生变化时，会重新创建 request 函数。// TODO: 是否可以去掉？可以，可以使用多个 useRequest 替代它
-
-**useRequest:**<br />**
-
-1. 在层级很深的组件内部 call 父组件的 request 请求。
-1. 方便在任何地方去调用请求
-
-比如需要在请求完成之后发起另一个请求、同时设置 form error（异步表单错误信息）、页面上显示 Loading 动画。
-
-使用 useRequest 创建了一个请求 A，A 成功之后执行 A 的 onSuccess 回调 onSuccess1，<br />经过一些操作之后，又用 useRequest 又创建了一个相同的请求 A，A 成功之后执行它的 onSuccess 回调 onSuccess2，这时候如果共享 callback，那么当第二次请求成功时，由于第一次请求的订阅关系并没有取消，那么 onSuccess1 和 onSuccess2 都会执行。这就可能引发一些 bug。
-
-无限滚动，发起请求 A 请求首页数据，当页面滚动到底部时会请求下一页的数据，并将得到的数据和之前的数据 merge 起来。点击更新按钮之后，会再次发起请求 A，以刷新页面的数据，当再次发起 A 请求时，由于 callback 共享，首次请求时的 callback 也会执行，导致重复 merge 数据的问题。
-
-将 callback 放到 action.meta  里面的缺点：
-
-- 闭包问题
-- API 节流，导致某些 onSuccess 回调不执行的问题。
-
-
-<br />
-
-
-1. useRequest 的 request 方法调用多次。
-1. useRequest 创建多次。
-
-A B C<br />A -> B -> C<br />A A A
-
-**useTempData:**
-
-fetchData 和 useRequest？不要将 fetchData 传入非常深的层级里面去使用。
-
-- useRequest 和 useTempData 在组件销毁时都会取消所有逻辑（unsubscribe）。子组件中 save state to store 的逻辑会导致问题。save store to state  的时候可能会导致组件销毁，以致于无法执行相应的 callback。比如点了一个 button 之后 trigger 父组件数据更新，在 onSuccess 的时候将数据存入 store，这时候因为数据发生变化，可能导致 button 被销毁，也就是说它内部的逻辑也就全部取消了。子组件使父组件的数据发生变化，然后导致子组件被销毁，子组件被销毁之后，子组件里面定义的所有的 useRequest 会被 cancel。因此，这种情况下，不应该将异步的请求调用放到子组件中，而是应该将请求调用放在父组件中，通过「子组件 + callback」来实现。
-
-- 在组件销毁之后，如果不取消请求/请求成功的回调，可能会引发问题。比如在组件发起请求，但在请求成功之前，组件就已经销毁了，虽然组件销毁了，但是请求成功的回调仍然会被执行，如果在它里面又去 setState，React 会抛出 warning。我们应该避免在组件销毁之后去 setState，如何避免呢？在组件 unmount 之后，不执行任何逻辑。
-
-组件只关心自己的逻辑，trigger 页面刷新这样的逻辑应该放到对应的组件。
+自动生成代码工具为我们省去了很大一部分工作量，再结合我们之前讲过的 useRequest、useTempData 和 useEntity，集成 API 就变成了一项非常轻松的工作。
 
