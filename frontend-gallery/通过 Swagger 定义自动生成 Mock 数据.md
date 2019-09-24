@@ -16,7 +16,6 @@
 
   - 生成 Mock 数据
   - 生成 Mock Server 配置
-  - 
 
 本文所有代码都在这个仓库 [swagger-faker](https://github.com/reeli/swagger-faker)。
 
@@ -87,7 +86,7 @@ OpenAPI 定义大致如下：
 
 
 
-#通过 Swagger JSON 生成 Mock 数据
+# 通过 Swagger JSON 生成 Mock 数据
 
 ## 处理 Swagger JSON
 
