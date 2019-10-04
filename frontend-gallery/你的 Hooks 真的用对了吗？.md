@@ -32,7 +32,7 @@ const [state, setState] = useState({
 
 
 
-那么问题来了，应该使用单个 state 变量还是多个 state 变量？
+那么问题来了，到底用单个 state 变量还是多个 state 变量呢？
 
 
 
@@ -157,15 +157,10 @@ const refresh = useCallback(() => {
 
 
 ```typescript
-function Example() {
-  const [id, setId] = useState();
+function Example({id}) {
   const requestParams = useRef({});
   requestParams.current = {page: 1, size: 20, id};
 
-  function handleClick(id) {
-    setId(id);
-  }
-  
   const refresh = useCallback(() => {
     doRefresh(requestParams.current);
   }, []);
@@ -188,7 +183,7 @@ function Example() {
 
 
 ```typescript
-function Example2({name, address, status, personA, personB, progress, searchState}) {
+function Example({id, name, address, status, personA, personB, progress}) {
   const [page, setPage] = useState();
   const [size, setSize] = useState();
 
@@ -259,36 +254,93 @@ useEffect(() => {
 
 
 
+如果 state 不能合并，在 callback内部又使用了 setState 方法，那么可以考虑使用 setState callback 来减少一些依赖。比如：
 
 
 
+```typescript
+const useExample = () => {
+  const [values, setValues] = useState({
+    data: {},
+    count: 0
+  });
+
+  const [updateData] = useCallback(
+      (nextData) => {
+        setValues({
+          data: nextData,
+          count: values.count + 1 // 因为 callback 内部依赖了外部的 values 变量，所以必须在 dependency array 中指定它
+        });
+      },
+      [values], 
+  );
+
+  return [values, updateData];
+};
+```
 
 
 
+上面的代码中，我们必须在 useCallback 的「dependency array」中指定 values，否则我们无法在 callback 中获取到最新的 values 状态。但是，通过 setState 回调函数，我们不用再依赖外部的 values 变量，因此也无需在「dependency array」中指定它。就像下面这样：
 
 
 
+```typescript
+const useExample = () => {
+  const [values, setValues] = useState({});
+
+  const [updateData] = useCallback((nextData) => {
+    setValues((prevValues) => ({
+      data: nextData,
+      count: prevValues.count + 1, // 通过 setState 回调函数获取最新的 values 状态，这时 callback 不再依赖于外部的 values 变量了，因此 dependency array 中不需要指定任何值
+    }));
+  }, []); // 这个 callback 永远不会重新创建
+
+  return [values, updateData];
+};
+```
 
 
 
-
-
-- 使用 setState callback
-- 使用 ref
+最后，还可以通过 ref 来保存可变变量，并对它进行读写。举个例子：
 
 
 
+```typescript
+const useExample = () => {
+  const [values, setValues] = useState({});
+  const latestValues = useRef(values);
+  latestValues.current = values;
+
+  const [updateData] = useCallback((nextData) => {
+    setValues({
+      data: nextData,
+      count: latestValues.current.count + 1,
+    });
+  }, []); 
+
+  return [values, updateData];
+};
+```
 
 
 
+在使用 ref 时要特别小心，因为它可以随意赋值，所以一定要控制好修改它的方法。特别是一些底层模块，在封装的时候千万不要直接暴露 ref，而是提供一些修改它的方法。
 
 
 
+说了这么多，归根到底都是为了写出更加清晰、易于维护的代码。如果发现「dependency array」依赖过多，我们就需要重新审视自己的代码。
 
 
 
-
-
+> - dependency array 依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
+>
+> - 如果发现 dependency array 依赖的值过多，我们应该采取一些方法来减少它。
+>   - 去掉不必要的 dependency array。
+>   - 将 hook 拆分为更小的单元，每个 hook 依赖于各自的 dependency array。
+>   - 通过合并相关的 state，将多个 dependency 聚合为一个 dependency。
+>   - 通过 setState 回调函数获取最新的 state，以减少外部依赖。
+>   - 通过 ref 来读取可变变量的值，不过需要注意控制修改它的途径。
 
 
 
@@ -300,7 +352,7 @@ useMemo 滥用的问题。
 
 
 
-# 问题四：ref 到底是在哪儿设置的？
+# 问题四：ref 的使用要小心？
 
 
 
@@ -321,4 +373,8 @@ Tuple 还是对象？
 # 问题七：有 Hooks 之后，高阶组件和 Render Props 还有用吗？
 
 
+
+
+
+useEffect hook 的执行顺序
 
