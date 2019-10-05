@@ -325,7 +325,7 @@ const useExample = () => {
 
 
 
-在使用 ref 时要特别小心，因为它可以随意赋值，所以一定要控制好修改它的方法。特别是一些底层模块，在封装的时候千万不要直接暴露 `ref`，而是提供一些修改它的方法。
+在使用 `ref` 时要特别小心，因为它可以随意赋值，所以一定要控制好修改它的方法。特别是一些底层模块，在封装的时候千万不要直接暴露 `ref`，而是提供一些修改它的方法。
 
 
 
@@ -411,7 +411,53 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 
-在使用 `useMemo` 前，考虑下面几个问题：
+除此之外，很多人还喜欢用 `useMemo` 来保持引用的相等。比如：
+
+
+
+```typescript
+export function Examples() {
+  const users = useMemo(() => [1, 2, 3], []);
+
+  return <ExpensiveComponent users={users} />
+}
+```
+
+
+
+在上面的例子中， 作者用 `useMemo` 来 「记住」`users` 数组，不是因为数组本身的开销大，而是因为 `users ` 的引用在每次 render 时都会发生改变，从而导致子组件 `ExpensiveComponent` 重新渲染。虽然 `users` 引用的变化会带来较大的开销，但这里使用 `useMemo` 却并不合适。先仔细看看 「dependency array」：
+
+
+
+```typescript
+useMemo(() => [1, 2, 3], []);
+```
+
+
+
+在上面的代码中，传递给 `useMemo` 的依赖数组是一个空数组，也就是说 `[1, 2, 3]` 仅在组件加载时计算一次。因此，我们可以得出：被记忆值的计算开销并不大，并且在组件挂载之后不会重新计算。
+
+
+
+作者只是想在重新渲染时保持值的引用不变，而不是「记住」一个值。所以，更好的方法是使用 `useRef`，而不是 `useMemo`。如果你不喜欢 `current` 属性，你通过解构并重命名的方式来使用：
+
+
+
+```typescript
+export function Examples() {
+  const {current: users} = useRef([1, 2, 3]);
+
+  return <ExpensiveComponent users={users} />
+}
+```
+
+
+
+以前我们只把 `ref` 用作保持 DOM 节点引用的工具，可 `useRef` hook 能做的事情远不止如此。我们可以用它来保存一些值的引用，以便随时取到最新的值。
+
+
+
+`useMemo` 用好了能提高应用的性能，用不好反而会带来更多问题。因此，在使用 `useMemo` 前，我希望大家能思考下面几个问题：
 
 
 
@@ -421,7 +467,7 @@ const Example = ({page, type}: IExampleProps) => {
 >
 > 3. 返回的值是原始值吗？
 >
-> 4. 使用 `useMemo` 还是 `useRef` 更合适？
+> 4. 使用 `useMemo` 还是 `useRef` 更合适？（不要仅仅为了保持引用的一致而「记忆」一个值）
 
 
 
@@ -429,45 +475,188 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 
+# 问题四：Hooks 能替代高阶组件和 Render Props 吗？
+
+在 Hooks 出现之前，我们有两种方法可以复用组件逻辑：[Render Props](https://reactjs.org/docs/render-props.html) 和[高阶组件](https://reactjs.org/docs/higher-order-components.html)。但是这两种方法都可能会造成 JSX「嵌套地域」的问题。Hooks 的出现，让组件逻辑的复用变得更简单，同时解决了「嵌套地域」的问题。Hooks 之于 React 就像 async / await  之于 Promise 一样。
+
+那 Hooks 能替代高阶组件和 Render Props 吗？官方给出的回答是，在高阶组件或者 Render Props 只渲染一个子组件时，Hook 提供了一种更简单的方式。不过在我看来，Hooks 并不能完全替代 Render Props 和高阶组件。接下来，我们会详细分析这个问题。
+
+
+
+## 高阶组件 HOC
+
+高阶组件是一个函数，它接受一个组件作为参数，返回一个新的组件。
+
+
+
+```typescript
+function enhance(Comp) {
+  // 增加一些其他的功能
+  return class extends Component {
+    // ...
+    render() {
+      return <Comp />;
+    }
+  };
+}
+```
+
+
+
+高阶组件采用了装饰器模式，让我们可以增强原有组件的功能，并且不破坏它原有的特性。例如：
+
+
+
+```typescript
+const RedButton = withStyles({
+  root: {
+    background: "red",
+  },
+})(Button);
+```
+
+
+
+在上面的代码中，我们希望保留 `Button` 组件的逻辑，但同时我们又想使用它原有的样式。因此，我们通过 `withStyles` 这个高阶组件注入了自定义的样式，并且生成了一个新的组件 `RedButton`。
+
+
+
+## Render Props
+
+Render Props 通过父组件将可复用逻辑封装起来，并把数据提供给子组件。至于子组件拿到数据之后要怎么渲染，完全由子组件自己决定，灵活性非常高。而高阶组件中，渲染结果是由父组件决定的。Render Props 不会产生新的组件，而且更加直观的体现了「父子关系」。
+
+
+
+```typescript
+<Parent>
+  {(data) => {
+    // 你父亲已经把江山给你打好了，并给你留下了一堆金币，至于怎么花就看你自己了
+    return <Child data={data} />;
+  }}
+</Parent>
+```
+
+
+
+Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周期和 Props、State 来进行渲染，在渲染上有着非常高的自由度。同时，它不像 Hooks 需要遵守一些规则，你可以放心大胆的在它里面使用 if / else、map 等各类操作。
+
+
+
+在大部分情况下，高阶组件和 Render Props 是可以相互转换的，也就是说用高阶组件能实现的，用 Render Props 也能实现。只不过在不同的场景下，哪种方式使用起来简单一点罢了。
+
+
+
+将上面 HOC 的例子改成 Render Props，使用起来确实要「麻烦」一点：
+
+
+
+```typescript
+<RedButton>
+  {(styles)=>(
+    <Button styles={styles}/>
+  )}
+</RedButton>
+```
+
+
+
+## 小结
+
+没有 Hooks 之前，高阶组件和 Render Props 本质上都是将复用逻辑提升到父组件中。而 Hooks 出现之后，我们将复用逻辑提取到组件顶层，而不是强行提升到父组件中。这样就能够避免 HOC 和 Render Props 带来的「嵌套地域」。但是，像 Context 的 `<Provider/>` 和 `<Consumer/>` 这样有父子层级关系（树状结构关系）的，还是只能使用 Render Props 或者 HOC。
+
+
+
+对于 Hooks、Render Props 和高阶组件来说，它们都有各自的使用场景：
+
+
+
+- Hooks：
+  - 可以用来取代 Class。
+  - 提取复用逻辑。除了有明确父子关系的，其他场景都可以使用 Hooks。
+- Render Props：在组件渲染上拥有更高的自由度，可以根据父组件提供的数据进行动态渲染。适合有明确父子关系的场景。
+
+- 高阶组件：适合用来做注入，并且生成一个新的可复用组件。适合用来写插件。
+
+
+
+不过，能使用 Hooks 的场景还是应该优先使用 Hooks，其次才是 Render Props 和 HOC。当然，Hooks、Render Props 和 HOC 不是对立的关系。我们既可以用 Hook 来写 Render Props 和 HOC，也可以在 HOC 中使用 Render Props 和 Hooks。
+
+
+
+# 问题五： 使用 Hooks 时还有哪些好的实践？
+
+1. 若 Hook 类型相同，且 dependency array 一致时，应该合并成一个 Hook。
+
+
+
+```typescript
+const dataA = useMemo(() => {
+  return getDataA();
+}, [A, B]);
+
+const dataB = useMemo(() => {
+  return getDataB();
+}, [A, B]);
+
+// 应该合并为
+  
+const [dataA, dataB] = useMemo(() => {
+  return [getDataA(), getDataB()]
+}, [A, B]);
+```
+
+
+
+2. 参考原生 Hooks 的设计，自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。但如果返回值的数量超过三个，还是建议返回一个对象。
+
+   
+
+```typescript
+export const useToggle = (defaultVisible: boolean = false) => {
+  const [visible, setVisible] = useState(defaultVisible);
+  const show = () => setVisible(true);
+  const hide = () => setVisible(false);
+
+  return [visible, show, hide] as [typeof visible, typeof show, typeof hide];
+};
+
+const [isOpen, open, close] = useToggle(); // 在外部可以更方便地修改名字
+const [visible, show, hide] = useToggle();
+```
+
+
+
+3. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
+4. 将方法静态化。
 
 
 
 
-useRef 保持引用相等。
+
+
+
+
+
+
+
+
 
 方法静态化。
 
-
-
-# 问题四：ref 的使用要小心？
-
-
-
-# 问题五：使用 Tuple 还是对象？
-
-
-
-Tuple 还是对象？
-
-
-
-# 问题六：如何写自定义 Hooks？
-
-- 将相关的逻辑放到一起。state 和 useEffect。
-
-
-
-# 问题七：有 Hooks 之后，高阶组件和 Render Props 还有用吗？
-
-
-
-
+方法开销大不大，如何具体评估？
 
 useEffect hook 的执行顺序
+
+hooks  的一些规范：
+
+- Hooks 内部依赖的方法应该放到 callback 内部，如果不能可以采用其他方法...
+- 若 hook 类型相同，且 deps 一致时，应该合并成一个 hook
+- ref 的使用要小心
+- 使用 Tuple 还是对象？
+- 将相关的逻辑放到一起。state 和 useEffect。
 
 
 
 参考文章：
 
 [You’re overusing useMemo: Rethinking Hooks memoization](https://blog.logrocket.com/rethinking-hooks-memoization/?from=singlemessage&isappinstalled=0)
-
