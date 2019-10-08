@@ -1,4 +1,4 @@
-从 React Hooks 正式发布到现在，我们一直在项目使用它。但是，在使用 Hooks 的过程中，我们也进入了一些误区，导致写出来的代码隐藏 bug 并且难以维护。这篇文章中，我们会具体分析这些问题，并总结一些好的实践，以供大家参考。
+从 React Hooks 正式发布到现在，我一直在项目使用它。但是，在使用 Hooks 的过程中，我也进入了一些误区，导致写出来的代码隐藏 bug 并且难以维护。这篇文章中，我会具体分析这些问题，并总结一些好的实践，以供大家参考。
 
 
 
@@ -411,6 +411,22 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 
+还有一个误区就是对创建函数开销的评估。有的人觉得在 render 中创建函数可能会开销比较大，为了避免函数多次创建，使用了 `useMemo` 或者 `useCallback`。但是对于现代浏览器来说，创建函数的成本微乎其微。因此，我们没有必要使用 `useMemo` 或者 `useCallback` 去节省这部分性能开销。当然，如果是为了保证每次 render 时回调的引用相等，你可以放心使用 `useMemo` 或者 `useCallback`。
+
+
+
+```typescript
+export const Example = () => {
+  const onSubmit = useCallback(() => { // 考虑这里的 useCallback 是否必要？
+    doSomething();
+  }, []);
+
+  return <form onSubmit={onSubmit}></form>;
+};
+```
+
+
+
 除此之外，很多人还喜欢用 `useMemo` 来保持引用的相等。比如：
 
 
@@ -463,7 +479,7 @@ export function Examples() {
 
 > 1. 要记住的函数开销很大吗？
 >
-> 2. 返回的值会被其他 hook 或者子组件用到吗？
+> 2. 返回的值会被其他 hook 或者子组件用到吗？（用到的话就可能会造成较大开销）
 >
 > 3. 返回的值是原始值吗？
 >
@@ -571,7 +587,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 
 - Hooks：
-  - 可以用来取代 Class。
+  - 替代 Class 的大部分用例，除了 `getSnapshotBeforeUpdate` 和 `componentDidCatch` 还不支持。
   - 提取复用逻辑。除了有明确父子关系的，其他场景都可以使用 Hooks。
 - Render Props：在组件渲染上拥有更高的自由度，可以根据父组件提供的数据进行动态渲染。适合有明确父子关系的场景。
 
@@ -585,7 +601,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 # 问题五： 使用 Hooks 时还有哪些好的实践？
 
-1. 若 Hook 类型相同，且 dependency array 一致时，应该合并成一个 Hook。
+1. 若 Hook 类型相同，且 dependency array 一致时，应该合并成一个 Hook。否则会产生更多开销。
 
 
 
@@ -627,11 +643,57 @@ const [visible, show, hide] = useToggle();
 
 
 3. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
-4. 将方法静态化。
+
+4. 将方法静态化。也就是说，方法只创建一次，不会根据某些值的变化而二次创建。让我们来看一个例子：
+
+   
+
+```typescript
+export const useValues = () => {
+  const [values, setValues] = useState();
+
+  const updateValues = useMemo(
+    () => (nextValues: any) => {
+      setValues({
+        ...values,
+        ...nextValues,
+      });
+    },
+    [values],
+  );
+
+  return [values, updateValues];
+};
+```
 
 
 
+在上面的例子中，为了避免每次 render 时都去创建 `updateValues` 函数，我们使用了 `useMemo`。只有当 `values` 发生变化时，才会重新创建 `updateValues` 函数。我们把 `updateValues` 函数暴露出去给外部使用。
 
+
+
+# 最后
+
+我们总结了在实践中一些常见的问题，并提出了一些解决方案。最后让我们再来回顾一下：
+
+
+
+1. 将完全不相关的 state 拆分为多组 state。
+2. 如果某些 state 是相互关联的，或者需要一起发生改变，就可以把它们合并为一组 state。
+3. 「dependency array」依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
+4. 如果发现 「dependency array」依赖的值过多，我们应该采取一些方法来减少它。
+   - 去掉不必要的「dependency array」。
+   - 将 hook 拆分为更小的单元，每个 hook 依赖于各自的「dependency array」。
+   - 通过合并相关的 state，将多个 dependency 聚合为一个 dependency。
+   - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
+   - 通过 ` ref ` 来读取可变变量的值，不过需要注意控制修改它的途径。
+5. 不要滥用 `useMemo`，使用 `useMemo` 前应该询问自己几个问题：
+   - 要记住的函数开销很大吗？
+   - 返回的值会被其他 hook 或者子组件用到吗？（用到的话就可能会造成较大开销）
+   - 返回的值是原始值吗？
+   - 使用 `useMemo` 还是 `useRef` 更合适？（不要仅仅为了保持引用的一致而「记忆」一个值）
+6. Hooks、Render Props 和高阶组件都有各自的使用场景，具体使用哪一种要看实际情况。
+7. 若 Hook 类型相同，且 dependency array 一致时，应该合并成一个 Hook。
 
 
 
