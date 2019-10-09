@@ -17,7 +17,7 @@ const [top, setTop] = useState(0);
 
 
 
-但同时，我们也可以像 Class 组件中的 `this.state` 一样，将所有的 state 放到一个 `object` 中，这样只需一个 state 变量即可：
+但同时，我们也可以像 Class 组件的 `this.state` 一样，将所有的 state 放到一个 `object` 中，这样只需一个 state 变量即可：
 
 
 
@@ -32,11 +32,11 @@ const [state, setState] = useState({
 
 
 
-那么问题来了，到底用单个 state 变量还是多个 state 变量呢？
+那么问题来了，到底该用单个 state 变量还是多个 state 变量呢？
 
 
 
-如果使用单个 state 变量，每次更新 state 时需要合并之前的 state。它不像 Class 组件的 `this.setState` 方法，会把更新的字段合并到 state 对象中。`useState` 返回的 `setState` 会替换原来的值：
+如果使用单个 state 变量，每次更新 state 时需要合并之前的 state。因为 `useState` 返回的 `setState` 会替换原来的值。这一点和 Class 组件的 `this.setState` 不同。`this.setState` 会把更新的字段自动合并到 `this.state` 对象中。
 
 
 
@@ -52,7 +52,7 @@ const handleMouseMove = (e) => {
 
 
 
-使用多个 state 变量可以让 state 的粒度更细，更易于逻辑的拆分和组合。比如，我们可以将关联的逻辑提取到自定义 hook 中：
+使用多个 state 变量可以让 state 的粒度更细，更易于逻辑的拆分和组合。比如，我们可以将关联的逻辑提取到自定义 Hook 中：
 
 
 
@@ -71,11 +71,9 @@ function usePosition() {
 
 
 
-我们发现，每次更新 `left` 时 `top` 也会随之更新。因此，把 `top` 和 `left` 拆分为两个 state 变量显得有点多余。在使用 state 之前，我们需要考虑状态拆分的「粒度」问题。如果粒度过细，代码就会变得比较冗余。如果粒度过粗，代码的可复用性就会降低。
+我们发现，每次更新 `left` 时 `top` 也会随之更新。因此，把 `top` 和 `left` 拆分为两个 state 变量显得有点多余。
 
-
-
-那么，到底哪些 state 应该合并，哪些 state 应该拆分呢？我总结了下面两点：
+在使用 state 之前，我们需要考虑状态拆分的「粒度」问题。如果粒度过细，代码就会变得比较冗余。如果粒度过粗，代码的可复用性就会降低。那么，到底哪些 state 应该合并，哪些 state 应该拆分呢？我总结了下面两点：
 
 
 
@@ -107,7 +105,7 @@ function usePosition() {
 
 # 问题二：deps 依赖过多，导致 Hooks 难以维护？
 
-使用 `useEffect`  hook 时，为了避免每次 render 都去执行它的 callback，我们通常会传入第二个参数「dependency array」。这样，只有当「依赖数组」发生变化时，才会执行 `useEffect` 的回调函数。
+使用 `useEffect`  hook 时，为了避免每次 render 都去执行它的 callback，我们通常会传入第二个参数「dependency array」（下面统称为依赖数组）。这样，只有当依赖数组发生变化时，才会执行 `useEffect` 的回调函数。
 
 
 
@@ -121,14 +119,14 @@ function Example({id, name}) {
 
 
 
-在上面的例子中，只有当 `id` 或者 `name` 发生变化时，才会打印日志。「dependency array」中必须包含在 callback 内部用到的所有参与 React 数据流的值，比如 `state`、`props` 以及它们的衍生物。如果有遗漏，可能会造成 bug。这其实就是 JS 闭包问题，对闭包不清楚的同学可以自行 google，这里就不展开了。
+在上面的例子中，只有当 `id` 或 `name` 发生变化时，才会打印日志。依赖数组中必须包含在 callback 内部用到的所有参与 React 数据流的值，比如 `state`、`props` 以及它们的衍生物。如果有遗漏，可能会造成 bug。这其实就是 JS 闭包问题，对闭包不清楚的同学可以自行 google，这里就不展开了。
 
 
 
 ```typescript
 function Example({id, name}) {
   useEffect(() => {
-    // 由于 dependency array 中不包含 name，所以当 name 发生变化时，无法打印日志
+    // 由于依赖数组中不包含 name，所以当 name 发生变化时，无法打印日志
     console.log(id, name); 
   }, [id]);
 }
@@ -136,7 +134,7 @@ function Example({id, name}) {
 
 
 
-在 React 中，除了 useEffect 外，接收「dependency array」的 hook 还有 `useMemo`、`useCallback` 和 `useImperativeHandle`。大部分情况下，使用「dependency array」确实可以节省一些性能的开销。我们刚刚也提到了，「dependency array」千万不要遗漏回调函数内部依赖的值。但如果 「dependency array」依赖了过多东西，可能导致代码难以维护。我在项目中就看到了这样一段代码：
+在 React 中，除了 useEffect 外，接收依赖数组作为参数的 Hook 还有 `useMemo`、`useCallback` 和 `useImperativeHandle`。大部分情况下，使用「dependency array」确实可以节省一些性能的开销。我们刚刚也提到了，依赖数组中千万不要遗漏回调函数内部依赖的值。但是，如果依赖数组依赖了过多东西，可能导致代码难以维护。我在项目中就看到了这样一段代码：
 
 
 
@@ -221,7 +219,7 @@ useEffect(() => {
 
 
 
-如果逻辑无法继续拆分，但是「dependency array」还是依赖过多东西，该怎么办呢？就比如我们上面的代码：
+如果逻辑无法继续拆分，但是依赖数组还是依赖了过多东西，该怎么办呢？就比如我们上面的代码：
 
 
 
@@ -269,7 +267,7 @@ const useExample = () => {
       (nextData) => {
         setValues({
           data: nextData,
-          count: values.count + 1 // 因为 callback 内部依赖了外部的 values 变量，所以必须在 dependency array 中指定它
+          count: values.count + 1 // 因为 callback 内部依赖了外部的 values 变量，所以必须在依赖数组中指定它
         });
       },
       [values], 
@@ -281,7 +279,7 @@ const useExample = () => {
 
 
 
-上面的代码中，我们必须在 `useCallback` 的「dependency array」中指定 `values`，否则我们无法在 callback 中获取到最新的 `values` 状态。但是，通过 `setState` 回调函数，我们不用再依赖外部的 `values` 变量，因此也无需在「dependency array」中指定它。就像下面这样：
+上面的代码中，我们必须在 `useCallback` 的依赖数组中指定 `values`，否则我们无法在 callback 中获取到最新的 `values` 状态。但是，通过 `setState` 回调函数，我们不用再依赖外部的 `values` 变量，因此也无需在依赖数组中指定它。就像下面这样：
 
 
 
@@ -292,7 +290,7 @@ const useExample = () => {
   const [updateData] = useCallback((nextData) => {
     setValues((prevValues) => ({
       data: nextData,
-      count: prevValues.count + 1, // 通过 setState 回调函数获取最新的 values 状态，这时 callback 不再依赖于外部的 values 变量了，因此 dependency array 中不需要指定任何值
+      count: prevValues.count + 1, // 通过 setState 回调函数获取最新的 values 状态，这时 callback 不再依赖于外部的 values 变量了，因此依赖数组中不需要指定任何值
     }));
   }, []); // 这个 callback 永远不会重新创建
 
@@ -329,18 +327,17 @@ const useExample = () => {
 
 
 
-说了这么多，归根到底都是为了写出更加清晰、易于维护的代码。如果发现「dependency array」依赖过多，我们就需要重新审视自己的代码。
+说了这么多，归根到底都是为了写出更加清晰、易于维护的代码。如果发现依赖数组依赖过多，我们就需要重新审视自己的代码。
 
 
 
-> - 「dependency array」依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
->
-> - 如果发现 「dependency array」依赖的值过多，我们应该采取一些方法来减少它。
->   - 去掉不必要的「dependency array」。
->   - 将 hook 拆分为更小的单元，每个 hook 依赖于各自的「dependency array」。
->   - 通过合并相关的 state，将多个 dependency 聚合为一个 dependency。
+> - 依赖数组依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
+> - 如果发现依赖数组依赖的值过多，我们应该采取一些方法来减少它。
+>   - 去掉不必要的依赖。
+>   - 将 Hook 拆分为更小的单元，每个 Hook 依赖于各自的依赖数组。
+>   - 通过合并相关的 state，将多个依赖值聚合为一个。
 >   - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
->   - 通过 ` ref ` 来读取可变变量的值，不过需要注意控制修改它的途径。
+>   - 通过 `ref` 来读取可变变量的值，不过需要注意控制修改它的途径。
 
 
 
@@ -350,7 +347,7 @@ const useExample = () => {
 
 
 
-为什么这么说呢？首先，我们需要知道 `useMemo `本身也有开销。`useMemo` 会「记住」一些值，同时在后续 render 时，将「dependency array」中的值取出来和上一次记录的值进行比较，如果不相等才会重新执行回调函数，否则直接返回「记住」的值。这个过程本身就会消耗一定的内存和计算资源。因此，过度使用 `useMemo` 可能会影响程序的性能。
+为什么这么说呢？首先，我们需要知道 `useMemo `本身也有开销。`useMemo` 会「记住」一些值，同时在后续 render 时，将依赖数组中的值取出来和上一次记录的值进行比较，如果不相等才会重新执行回调函数，否则直接返回「记住」的值。这个过程本身就会消耗一定的内存和计算资源。因此，过度使用 `useMemo` 可能会影响程序的性能。
 
 
 
@@ -441,7 +438,7 @@ export function Examples() {
 
 
 
-在上面的例子中， 作者用 `useMemo` 来 「记住」`users` 数组，不是因为数组本身的开销大，而是因为 `users ` 的引用在每次 render 时都会发生改变，从而导致子组件 `ExpensiveComponent` 重新渲染。虽然 `users` 引用的变化会带来较大的开销，但这里使用 `useMemo` 却并不合适。先仔细看看 「dependency array」：
+在上面的例子中， 作者用 `useMemo` 来 「记住」`users` 数组，不是因为数组本身的开销大，而是因为 `users ` 的引用在每次 render 时都会发生改变，从而导致子组件 `ExpensiveComponent` 重新渲染。虽然 `users` 引用的变化会带来较大的开销，但这里使用 `useMemo` 却并不合适。先仔细看看它的依赖数组：
 
 
 
@@ -601,7 +598,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 # 问题五： 使用 Hooks 时还有哪些好的实践？
 
-1. 若 Hook 类型相同，且 dependency array 一致时，应该合并成一个 Hook。否则会产生更多开销。
+1. 若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。否则会产生更多开销。
 
 
 
@@ -641,10 +638,58 @@ const [visible, show, hide] = useToggle();
 ```
 
 
-
 3. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
 
-4. 将方法静态化。也就是说，方法只创建一次，不会根据某些值的变化而二次创建。让我们来看一个例子：
+
+# 最后
+
+我们总结了在实践中一些常见的问题，并提出了一些解决方案。最后让我们再来回顾一下：
+
+
+
+1. 将完全不相关的 state 拆分为多组 state。
+2. 如果某些 state 是相互关联的，或者需要一起发生改变，就可以把它们合并为一组 state。
+3. 依赖数组依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
+4. 如果发现依赖数组依赖的值过多，我们应该采取一些方法来减少它。
+   - 去掉不必要的依赖。
+   - 将 Hook 拆分为更小的单元，每个 Hook 依赖于各自的依赖数组。
+   - 通过合并相关的 state，将多个依赖值聚合为一个。
+   - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
+   - 通过 `ref` 来读取可变变量的值，不过需要注意控制修改它的途径。
+5. 不要滥用 `useMemo`，使用 `useMemo` 前应该询问自己几个问题：
+   - 要记住的函数开销很大吗？
+   - 返回的值会被其他 hook 或者子组件用到吗？（用到的话就可能会造成较大开销）
+   - 返回的值是原始值吗？
+   - 使用 `useMemo` 还是 `useRef` 更合适？（不要仅仅为了保持引用的一致而「记忆」一个值）
+6. Hooks、Render Props 和高阶组件都有各自的使用场景，具体使用哪一种要看实际情况。
+7. 若 Hook 类型相同，且 dependency array 一致时，应该合并成一个 Hook。
+8. 自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。如果返回的值过多，则不建议使用。
+9. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
+
+参考文章：
+
+[You’re overusing useMemo: Rethinking Hooks memoization](https://blog.logrocket.com/rethinking-hooks-memoization/?from=singlemessage&isappinstalled=0)
+
+
+
+---------------------
+
+方法静态化。
+
+方法开销大不大，如何具体评估？
+
+useEffect hook 的执行顺序
+
+hooks  的一些规范：
+
+- Hooks 内部依赖的方法应该放到 callback 内部，如果不能可以采用其他方法...
+- 若 hook 类型相同，且 deps 一致时，应该合并成一个 hook
+- ref 的使用要小心
+- 使用 Tuple 还是对象？
+- 将相关的逻辑放到一起。state 和 useEffect。
+
+
+将方法静态化。也就是说，方法只创建一次，不会根据某些值的变化而二次创建。让我们来看一个例子：
 
    
 
@@ -669,56 +714,3 @@ export const useValues = () => {
 
 
 在上面的例子中，为了避免每次 render 时都去创建 `updateValues` 函数，我们使用了 `useMemo`。只有当 `values` 发生变化时，才会重新创建 `updateValues` 函数。我们把 `updateValues` 函数暴露出去给外部使用。
-
-
-
-# 最后
-
-我们总结了在实践中一些常见的问题，并提出了一些解决方案。最后让我们再来回顾一下：
-
-
-
-1. 将完全不相关的 state 拆分为多组 state。
-2. 如果某些 state 是相互关联的，或者需要一起发生改变，就可以把它们合并为一组 state。
-3. 「dependency array」依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
-4. 如果发现 「dependency array」依赖的值过多，我们应该采取一些方法来减少它。
-   - 去掉不必要的「dependency array」。
-   - 将 hook 拆分为更小的单元，每个 hook 依赖于各自的「dependency array」。
-   - 通过合并相关的 state，将多个 dependency 聚合为一个 dependency。
-   - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
-   - 通过 ` ref ` 来读取可变变量的值，不过需要注意控制修改它的途径。
-5. 不要滥用 `useMemo`，使用 `useMemo` 前应该询问自己几个问题：
-   - 要记住的函数开销很大吗？
-   - 返回的值会被其他 hook 或者子组件用到吗？（用到的话就可能会造成较大开销）
-   - 返回的值是原始值吗？
-   - 使用 `useMemo` 还是 `useRef` 更合适？（不要仅仅为了保持引用的一致而「记忆」一个值）
-6. Hooks、Render Props 和高阶组件都有各自的使用场景，具体使用哪一种要看实际情况。
-7. 若 Hook 类型相同，且 dependency array 一致时，应该合并成一个 Hook。
-
-
-
-
-
-
-
-
-
-方法静态化。
-
-方法开销大不大，如何具体评估？
-
-useEffect hook 的执行顺序
-
-hooks  的一些规范：
-
-- Hooks 内部依赖的方法应该放到 callback 内部，如果不能可以采用其他方法...
-- 若 hook 类型相同，且 deps 一致时，应该合并成一个 hook
-- ref 的使用要小心
-- 使用 Tuple 还是对象？
-- 将相关的逻辑放到一起。state 和 useEffect。
-
-
-
-参考文章：
-
-[You’re overusing useMemo: Rethinking Hooks memoization](https://blog.logrocket.com/rethinking-hooks-memoization/?from=singlemessage&isappinstalled=0)
