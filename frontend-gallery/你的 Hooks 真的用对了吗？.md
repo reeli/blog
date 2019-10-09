@@ -134,7 +134,7 @@ function Example({id, name}) {
 
 
 
-在 React 中，除了 useEffect 外，接收依赖数组作为参数的 Hook 还有 `useMemo`、`useCallback` 和 `useImperativeHandle`。大部分情况下，使用「dependency array」确实可以节省一些性能的开销。我们刚刚也提到了，依赖数组中千万不要遗漏回调函数内部依赖的值。但是，如果依赖数组依赖了过多东西，可能导致代码难以维护。我在项目中就看到了这样一段代码：
+在 React 中，除了 useEffect 外，接收依赖数组作为参数的 Hook 还有 `useMemo`、`useCallback` 和 `useImperativeHandle`。我们刚刚也提到了，依赖数组中千万不要遗漏回调函数内部依赖的值。但是，如果依赖数组依赖了过多东西，可能导致代码难以维护。我在项目中就看到了这样一段代码：
 
 
 
@@ -662,14 +662,13 @@ const [visible, show, hide] = useToggle();
    - 返回的值是原始值吗？
    - 使用 `useMemo` 还是 `useRef` 更合适？（不要仅仅为了保持引用的一致而「记忆」一个值）
 6. Hooks、Render Props 和高阶组件都有各自的使用场景，具体使用哪一种要看实际情况。
-7. 若 Hook 类型相同，且 dependency array 一致时，应该合并成一个 Hook。
+7. 若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。
 8. 自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。如果返回的值过多，则不建议使用。
 9. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
 
 参考文章：
 
 [You’re overusing useMemo: Rethinking Hooks memoization](https://blog.logrocket.com/rethinking-hooks-memoization/?from=singlemessage&isappinstalled=0)
-
 
 
 ---------------------
