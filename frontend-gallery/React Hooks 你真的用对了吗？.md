@@ -8,7 +8,7 @@
 
 
 
-```typescript
+```javascript
 const [width, setWidth] = useState(100);
 const [height, setHeight] = useState(100);
 const [left, setLeft] = useState(0);
@@ -21,7 +21,7 @@ const [top, setTop] = useState(0);
 
 
 
-```typescript
+```javascript
 const [state, setState] = useState({
   width: 100,
   height: 100,
@@ -40,7 +40,7 @@ const [state, setState] = useState({
 
 
 
-```typescript
+```javascript
 const handleMouseMove = (e) => {
   setState((prevState) => ({
     ...prevState,
@@ -56,7 +56,7 @@ const handleMouseMove = (e) => {
 
 
 
-```typescript
+```javascript
 function usePosition() {
   const [left, setLeft] = useState(0);
   const [top, setTop] = useState(0);
@@ -82,7 +82,7 @@ function usePosition() {
 
 
 
-```typescript
+```javascript
 function Box() {
   const [position, setPosition] = usePosition();
   const [size, setSize] = useState({width: 100, height: 100});
@@ -109,7 +109,7 @@ function usePosition() {
 
 
 
-```typescript
+```javascript
 function Example({id, name}) {
   useEffect(() => {
     console.log(id, name);
@@ -123,7 +123,7 @@ function Example({id, name}) {
 
 
 
-```typescript
+```javascript
 function Example({id, name}) {
   useEffect(() => {
     // 由于依赖数组中不包含 name，所以当 name 发生变化时，无法打印日志
@@ -138,7 +138,7 @@ function Example({id, name}) {
 
 
 
-```typescript
+```javascript
 const refresh = useCallback(() => {
   // ...
 }, [name, searchState, address, status, personA, personB, progress, page, size]);
@@ -154,7 +154,7 @@ const refresh = useCallback(() => {
 
 
 
-```typescript
+```javascript
 function Example({id}) {
   const requestParams = useRef({});
   requestParams.current = {page: 1, size: 20, id};
@@ -180,7 +180,7 @@ function Example({id}) {
 
 
 
-```typescript
+```javascript
 function Example({id, name, address, status, personA, personB, progress}) {
   const [page, setPage] = useState();
   const [size, setSize] = useState();
@@ -207,7 +207,7 @@ function Example({id, name, address, status, personA, personB, progress}) {
 
 
 
-```typescript
+```javascript
 useEffect(() => {
   id && doSearch({name, address, status, personA, personB, progress});
 }, [id, name, address, status, personA, personB, progress]);
@@ -223,7 +223,7 @@ useEffect(() => {
 
 
 
-```typescript
+```javascript
 useEffect(() => {
   id && doSearch({name, address, status, personA, personB, progress});
 }, [id, name, address, status, personA, personB, progress]);
@@ -235,7 +235,7 @@ useEffect(() => {
 
 
 
-```typescript
+```javascript
 const [filters, setFilters] = useState({
   name: "",
   address: "",
@@ -256,7 +256,7 @@ useEffect(() => {
 
 
 
-```typescript
+```javascript
 const useExample = () => {
   const [values, setValues] = useState({
     data: {},
@@ -283,7 +283,7 @@ const useExample = () => {
 
 
 
-```typescript
+```javascript
 const useExample = () => {
   const [values, setValues] = useState({});
 
@@ -304,7 +304,7 @@ const useExample = () => {
 
 
 
-```typescript
+```javascript
 const useExample = () => {
   const [values, setValues] = useState({});
   const latestValues = useRef(values);
@@ -362,7 +362,7 @@ const useExample = () => {
 
 
 
-```typescript
+```javascript
 interface IExampleProps {
   page: number;
   type: string;
@@ -394,7 +394,7 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 
-```typescript
+```javascript
 interface IExampleProps {
   page: number;
   type: string;
@@ -412,7 +412,7 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 
-```typescript
+```javascript
 export const Example = () => {
   const onSubmit = useCallback(() => { // 考虑这里的 useCallback 是否必要？
     doSomething();
@@ -428,7 +428,7 @@ export const Example = () => {
 
 
 
-```typescript
+```javascript
 // 使用 useMemo
 export function Examples() {
   const users = useMemo(() => [1, 2, 3], []);
@@ -456,7 +456,7 @@ export function Examples() {
 
 
 
-```typescript
+```javascript
 function Example() {
   const data = useData();
   const [dataChanged, setDataChanged] = useState(false);
@@ -525,7 +525,7 @@ const useData = () => {
 
 
 
-```typescript
+```javascript
 function enhance(Comp) {
   // 增加一些其他的功能
   return class extends Component {
@@ -543,7 +543,7 @@ function enhance(Comp) {
 
 
 
-```typescript
+```javascript
 const RedButton = withStyles({
   root: {
     background: "red",
@@ -563,7 +563,7 @@ Render Props 通过父组件将可复用逻辑封装起来，并把数据提供�
 
 
 
-```typescript
+```javascript
 <Parent>
   {(data) => {
     // 你父亲已经把江山给你打好了，并给你留下了一堆金币，至于怎么花就看你自己了
@@ -586,7 +586,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 
 
-```typescript
+```javascript
 <RedButton>
   {(styles)=>(
     <Button styles={styles}/>
@@ -625,7 +625,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 
 
-```typescript
+```javascript
 const dataA = useMemo(() => {
   return getDataA();
 }, [A, B]);
@@ -647,7 +647,7 @@ const [dataA, dataB] = useMemo(() => {
 
    
 
-```typescript
+```javascript
 export const useToggle = (defaultVisible: boolean = false) => {
   const [visible, setVisible] = useState(defaultVisible);
   const show = () => setVisible(true);
@@ -670,7 +670,7 @@ const [visible, show, hide] = useToggle();
 
 
 
-```typescript
+```javascript
 export const useCount = () => {
   const [count, setCount] = useState(0);
 
@@ -699,7 +699,7 @@ export const useCount = () => {
 
 
 
-```typescript
+```javascript
 function Counter() {
   const [count, increase] = useCount();
 
@@ -742,7 +742,7 @@ function Counter() {
 
 
 
-```typescript
+```javascript
 export const useCount = () => {
   const [count, setCount] = useState(0);
 
@@ -771,7 +771,7 @@ export const useCount = () => {
 
 
 
-```typescript
+```javascript
 export const useCount = () => {
   const [count, setCount] = useState(0);
   const countRef = useRef(count);
@@ -867,12 +867,12 @@ hooks  的一些规范：
 
    
 
-```typescript
+```javascript
 export const useValues = () => {
   const [values, setValues] = useState();
 
   const updateValues = useMemo(
-    () => (nextValues: any) => {
+    () => (nextValues) => {
       setValues({
         ...values,
         ...nextValues,
