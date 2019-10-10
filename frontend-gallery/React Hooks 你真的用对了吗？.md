@@ -300,7 +300,7 @@ const useExample = () => {
 
 
 
-最后，还可以通过 `ref` 来保存可变变量，并对它进行读写。举个例子：
+最后，还可以通过 `ref` 来保存可变变量。以前我们只把 `ref` 用作保持 DOM 节点引用的工具，可 `useRef` Hook 能做的事情远不止如此。我们可以用它来保存一些值的引用，并对它进行读写。举个例子：
 
 
 
@@ -386,7 +386,7 @@ const Example = ({page, type}: IExampleProps) => {
 这个担忧是正确的，但是使用 `useMemo` 之前，我们应该先思考两个问题：
 
 1. 传递给 `useMemo` 的函数开销大不大？在上面的例子中，就是考虑 `getResolvedValue` 函数的开销大不大。JS 中大多数方法都是优化过的，比如 `Array.map`、`Array.forEach` 等。如果你执行的操作开销不大，那么就不需要记住返回值。否则，使用 `useMemo` 本身的开销就可能超过重新计算这个值的开销。因此，对于一些简单的 JS 运算来说，我们不需要使用 `useMemo` 来「记住」它的返回值。
-2. 当输入相同时，「记忆」值的引用是否会发生改变？在上面的例子中，就是当 `page` 和 `type` 相同时，`resolvedValue` 的引用是否会发生改变？这里我们就需要考虑 `resolvedValue` 的类型了。如果 `resolvedValue` 是一个对象，由于我们项目上使用「函数式编程」，所以每次函数调用都会产生一个新的引用。但是，如果 `resolvedValue` 是一个 JS 基本类型（`string`, `boolean`, `null`, `undefined`, `number`, `symbol`），也就不存在「引用」的概念了，每次计算出来的这个值一定是相等的。也就是说，`ExpensiveComponent` 组件不会被重新渲染。
+2. 当输入相同时，「记忆」值的引用是否会发生改变？在上面的例子中，就是当 `page` 和 `type` 相同时，`resolvedValue` 的引用是否会发生改变？这里我们就需要考虑 `resolvedValue` 的类型了。如果 `resolvedValue` 是一个对象，由于我们项目上使用「函数式编程」，每次函数调用都会产生一个新的引用。但是，如果 `resolvedValue` 是一个原始值（`string`, `boolean`, `null`, `undefined`, `number`, `symbol`），也就不存在「引用」的概念了，每次计算出来的这个值一定是相等的。也就是说，`ExpensiveComponent` 组件不会被重新渲染。
 
 
 
@@ -424,39 +424,19 @@ export const Example = () => {
 
 
 
-除此之外，很多人还喜欢用 `useMemo` 来保持引用的相等。比如：
+我之前看过一篇文章（链接在文章的最后），这篇文章中提到，如果只是想在重新渲染时保持值的引用不变，更好的方法是使用 `useRef`，而不是 `useMemo`。我并不同意这个观点。让我们来看个例子：
 
 
 
 ```typescript
+// 使用 useMemo
 export function Examples() {
   const users = useMemo(() => [1, 2, 3], []);
 
   return <ExpensiveComponent users={users} />
 }
-```
-
-
-
-在上面的例子中， 作者用 `useMemo` 来 「记住」`users` 数组，不是因为数组本身的开销大，而是因为 `users ` 的引用在每次 render 时都会发生改变，从而导致子组件 `ExpensiveComponent` 重新渲染。虽然 `users` 引用的变化会带来较大的开销，但这里使用 `useMemo` 却并不合适。先仔细看看它的依赖数组：
-
-
-
-```typescript
-useMemo(() => [1, 2, 3], []);
-```
-
-
-
-在上面的代码中，传递给 `useMemo` 的依赖数组是一个空数组，也就是说 `[1, 2, 3]` 仅在组件加载时计算一次。因此，我们可以得出：被记忆值的计算开销并不大，并且在组件挂载之后不会重新计算。
-
-
-
-作者只是想在重新渲染时保持值的引用不变，而不是「记住」一个值。所以，更好的方法是使用 `useRef`，而不是 `useMemo`。如果你不喜欢 `current` 属性，你通过解构并重命名的方式来使用：
-
-
-
-```typescript
+  
+// 使用 useRef
 export function Examples() {
   const {current: users} = useRef([1, 2, 3]);
 
@@ -466,25 +446,68 @@ export function Examples() {
 
 
 
-以前我们只把 `ref` 用作保持 DOM 节点引用的工具，可 `useRef` hook 能做的事情远不止如此。我们可以用它来保存一些值的引用，以便随时取到最新的值。
+在上面的例子中，我们用 `useMemo` 来「记住」`users` 数组，不是因为数组本身的开销大，而是因为 `users ` 的引用在每次 render 时都会发生改变，从而导致子组件 `ExpensiveComponent` 重新渲染（可能会带来较大开销）。
+
+作者认为从语义上不应该使用 `useMemo`，而是应该使用 `useRef`，否则会消耗更多的内存和计算资源。但是，`useRef` 的实现其实是基于 `useMemo` 的，使用 `useRef` 就相当于使用了 `useMemo`。`useRef` 只不过是一个包裹了 `useMemo` 的「语法糖」。因此，我认为可以使用 `useMemo` 来保值的引用一致。
 
 
 
-`useMemo` 用好了能提高应用的性能，用不好反而会带来更多问题。因此，在使用 `useMemo` 前，我希望大家能思考下面几个问题：
+在编写自定义 Hook 时，返回值一定要保持引用的一致性。因为你无法确定外部要如何使用它的返回值。如果返回值被用做其他 Hook 的依赖，并且每次 re-render 时引用不一致（当值相等的情况），就可能会产生 bug。比如：
 
 
 
-> 1. 要记住的函数开销很大吗？
->
-> 2. 返回的值会被其他 hook 或者子组件用到吗？（用到的话就可能会造成较大开销）
->
-> 3. 返回的值是原始值吗？
->
-> 4. 使用 `useMemo` 还是 `useRef` 更合适？（不要仅仅为了保持引用的一致而「记忆」一个值）
+```typescript
+function Example() {
+  const data = useData();
+  const [dataChanged, setDataChanged] = useState(false);
+
+  useEffect(() => {
+    setDataChanged((prevDataChanged) => !prevDataChanged); // 当 data 发生变化时，调用 setState。如果 data 值相同而引用不同，就可能会产生非预期的结果。
+  }, [data]);
+
+  console.log(dataChanged);
+
+  return <ExpensiveComponent data={data} />;
+}
+
+const useData = () => {
+  // 获取异步数据
+  const resp = getAsyncData([]);
+
+  // 处理获取到的异步数据，这里使用了 Array.map。因此，即使 data 相同，每次调用得到的引用也是不同的。
+  const mapper = (data) => data.map((item) => ({...item, selected: false}));
+
+  return resp ? mapper(resp) : resp;
+};
+```
 
 
 
-回答出上面这几个问题，判断是否应该使用 `useMemo` 也就不再困难了。
+在上面的例子中，我们通过 `useData` Hook 获取了 `data`。每次 render 时 `data` 的值没有发生变化，但是引用却不一致。如果把 `data` 用到 `useEffect ` 的依赖数组中，就可能产生非预期的结果。另外，由于引用的不同，也会导致 `ExpensiveComponent`  组件 re-render，产生性能问题。
+
+
+
+>  如果因为 prop 的值相同而引用不同，从而导致子组件发生 re-render，不一定会造成性能问题。因为 Virtual DOM re-render ≠ DOM re-render。但是当子组件特别大时，Virtual DOM 的 Diff 开销也很大。因此，还是应该尽量避免子组件 re-render。
+
+
+
+因此，在使用 `useMemo` 之前，我们不妨先问自己几个问题：
+
+
+
+1. 要记住的函数开销很大吗？
+2. 返回的值是原始值吗？
+3. 记忆的值会被其他 Hook 或者子组件用到吗？
+
+
+
+回答出上面这几个问题，判断是否应该使用 `useMemo` 也就不再困难了。不过在实际项目中，还是最好定义出一套统一的规范，方便团队中多人协作。比如第一个问题，开销很大如何定义？如果没有明确的标准，执行起来会非常困难。因此，我总结了下面几条规则：
+
+
+
+> 1. 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），则不需要使用 `useMemo`。
+> 2. 对于组件内部用到的  object、array、函数等，如果没有用到其他 Hook 的依赖数组中，或者造成子组件 re-render，可以不使用 `useMemo`。
+> 3. 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
 
 
 
@@ -638,7 +661,142 @@ const [visible, show, hide] = useToggle();
 ```
 
 
+
 3. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
+
+
+
+4. 在使用 `useMemo` 或者 `useCallback` 时，确保返回的函数只创建一次。也就是说，函数不会根据依赖数组的变化而二次创建。举个例子：
+
+
+
+```typescript
+export const useCount = () => {
+  const [count, setCount] = useState(0);
+
+  const [increase, decrease] = useMemo(() => {
+    const increase = () => {
+      setCount(count + 1);
+    };
+
+    const decrease = () => {
+      setCount(count - 1);
+    };
+    return [increase, decrease];
+  }, [count]);
+
+  return {
+    count,
+    increase,
+    decrease,
+  };
+};
+```
+
+
+
+在 `useCount` Hook 中， `count` 状态的改变会让 `useMemo` 中的 `increase` 和 `decrease` 函数被重新创建。由于闭包特性，如果这两个函数被其他 Hook 用到了，我们应该将这两个函数也添加到相应 Hook 的依赖数组中，否则就会产生 bug。比如：
+
+
+
+```typescript
+function Counter() {
+  const [count, increase] = useCount();
+
+  useEffect(() => {
+    const handleClick = () => {
+      increase(); // 执行后 count 的值永远都是 1
+    };
+
+    document.body.addEventListener("click", handleClick);
+    return () => {
+      document.body.removeEventListener("click", handleClick);
+    };
+  }, []); 
+
+  return <h1>{count}</h1>;
+}
+```
+
+
+
+在 `useCount` 中，`increase` 会随着 `count` 的变化而被重新创建。但是 `increase` 被重新创建之后， `useEffect` 并不会再次执行，所以 `useEffect` 中取到的 `increase` 永远都是首次创建时的 `increase` 。而首次创建时 `count` 的值为 0，因此无论点击多少次， `count` 的值永远都是 1。
+
+
+
+那把 `increase` 函数放到 `useEffect `  的依赖数组中不就好了吗？事实上，这会带来更多问题：
+
+
+
+- `increase` 的变化会导致频繁地绑定事件监听，以及解除事件监听。
+
+- 需求是只在组件 mount 时执行一次 `useEffect`，但是 `increase` 的变化会导致 `useEffect` 多次执行，不能满足需求。
+
+
+
+如何解决这些问题呢？
+
+
+
+一、通过 `setState` 回调，让函数不依赖外部变量。例如：
+
+
+
+```typescript
+export const useCount = () => {
+  const [count, setCount] = useState(0);
+
+  const [increase, decrease] = useMemo(() => {
+    const increase = () => {
+      setCount((latestCount)=> latestCount + 1);
+    };
+
+    const decrease = () => {
+      setCount((latestCount)=> latestCount - 1);
+    };
+    return [increase, decrease];
+  }, []); // 保持依赖数组为空，这样 increase 和 decrease 方法都只会被创建一次
+
+  return {
+    count,
+    increase,
+    decrease,
+  };
+};
+```
+
+
+
+二、通过 `ref` 来保存可变变量。例如：
+
+
+
+```typescript
+export const useCount = () => {
+  const [count, setCount] = useState(0);
+  const countRef = useRef(count);
+  countRef.current = count;
+
+  const [increase, decrease] = useMemo(() => {
+    const increase = () => {
+      setCount(countRef.current + 1);
+    };
+
+    const decrease = () => {
+      setCount(countRef.current - 1);
+    };
+    return [increase, decrease];
+  }, []); // 保持依赖数组为空，这样 increase 和 decrease 方法都只会被创建一次
+
+  return {
+    count,
+    increase,
+    decrease,
+  };
+};
+```
+
+
 
 
 # 最后
@@ -656,22 +814,39 @@ const [visible, show, hide] = useToggle();
    - 通过合并相关的 state，将多个依赖值聚合为一个。
    - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
    - 通过 `ref` 来读取可变变量的值，不过需要注意控制修改它的途径。
-5. 不要滥用 `useMemo`，使用 `useMemo` 前应该询问自己几个问题：
-   - 要记住的函数开销很大吗？
-   - 返回的值会被其他 hook 或者子组件用到吗？（用到的话就可能会造成较大开销）
-   - 返回的值是原始值吗？
-   - 使用 `useMemo` 还是 `useRef` 更合适？（不要仅仅为了保持引用的一致而「记忆」一个值）
+5. 为了确保不滥用 `useMemo`，我们定义了下面几条规则：
+   - 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），则不需要使用 `useMemo`。
+   - 对于组件内部用到的  object、array、函数等，如果没有用到其他 Hook 的依赖数组中，或者造成子组件 re-render，可以不使用 `useMemo`。
+   - 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
 6. Hooks、Render Props 和高阶组件都有各自的使用场景，具体使用哪一种要看实际情况。
 7. 若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。
 8. 自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。如果返回的值过多，则不建议使用。
 9. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
+10. 在使用 `useMemo` 或者 `useCallback` 时，可以借助 `ref` 或者 `setState` callback，确保返回的函数只创建一次。也就是说，函数不会根据依赖数组的变化而二次创建。
+
+
 
 参考文章：
 
 [You’re overusing useMemo: Rethinking Hooks memoization](https://blog.logrocket.com/rethinking-hooks-memoization/?from=singlemessage&isappinstalled=0)
 
 
----------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------
+
+
 
 方法静态化。
 
@@ -713,3 +888,12 @@ export const useValues = () => {
 
 
 在上面的例子中，为了避免每次 render 时都去创建 `updateValues` 函数，我们使用了 `useMemo`。只有当 `values` 发生变化时，才会重新创建 `updateValues` 函数。我们把 `updateValues` 函数暴露出去给外部使用。
+
+- setState 为什么可以直接在闭包中使用？
+- 方法导致频繁的创建和销毁 useEffect，可能会造成混乱
+- 自定义 Hooks 中暴露出来的值都应该使用 useMemo，因为不确定外部会如何使用
+- 组件内部的方法或者值，如果要传递给子组件的，加 useMemo，否则可以不用加。
+- useMemo 和 useRef？useRef 只是 useMemo 的语法糖？
+- 方法预先定义好，可以做到不根据值的变化而二次创建。
+
+定义好一些统一的规范，在实际项目中，更方便团队中多人协作，否则标准的规则不一致，执行起来会非常困难。 
