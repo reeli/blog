@@ -257,7 +257,7 @@ useEffect(() => {
 
 
 ```javascript
-const useExample = () => {
+const useValues = () => {
   const [values, setValues] = useState({
     data: {},
     count: 0
@@ -284,7 +284,7 @@ const useExample = () => {
 
 
 ```javascript
-const useExample = () => {
+const useValues = () => {
   const [values, setValues] = useState({});
 
   const [updateData] = useCallback((nextData) => {
@@ -305,7 +305,7 @@ const useExample = () => {
 
 
 ```javascript
-const useExample = () => {
+const useValues = () => {
   const [values, setValues] = useState({});
   const latestValues = useRef(values);
   latestValues.current = values;
@@ -362,7 +362,7 @@ const useExample = () => {
 
 
 
-```javascript
+```typescript
 interface IExampleProps {
   page: number;
   type: string;
@@ -394,7 +394,7 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 
-```javascript
+```typescript
 interface IExampleProps {
   page: number;
   type: string;
@@ -413,7 +413,7 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 ```javascript
-export const Example = () => {
+const Example = () => {
   const onSubmit = useCallback(() => { // 考虑这里的 useCallback 是否必要？
     doSomething();
   }, []);
@@ -430,14 +430,14 @@ export const Example = () => {
 
 ```javascript
 // 使用 useMemo
-export function Examples() {
+function Example() {
   const users = useMemo(() => [1, 2, 3], []);
 
   return <ExpensiveComponent users={users} />
 }
   
 // 使用 useRef
-export function Examples() {
+function Example() {
   const {current: users} = useRef([1, 2, 3]);
 
   return <ExpensiveComponent users={users} />
@@ -647,7 +647,7 @@ const [dataA, dataB] = useMemo(() => {
 
    
 
-```javascript
+```typescript
 export const useToggle = (defaultVisible: boolean = false) => {
   const [visible, setVisible] = useState(defaultVisible);
   const show = () => setVisible(true);
@@ -685,11 +685,7 @@ export const useCount = () => {
     return [increase, decrease];
   }, [count]);
 
-  return {
-    count,
-    increase,
-    decrease,
-  };
+  return [count, increase, decrease];
 };
 ```
 
@@ -748,20 +744,16 @@ export const useCount = () => {
 
   const [increase, decrease] = useMemo(() => {
     const increase = () => {
-      setCount((latestCount)=> latestCount + 1);
+      setCount((latestCount) => latestCount + 1);
     };
 
     const decrease = () => {
-      setCount((latestCount)=> latestCount - 1);
+      setCount((latestCount) => latestCount - 1);
     };
     return [increase, decrease];
   }, []); // 保持依赖数组为空，这样 increase 和 decrease 方法都只会被创建一次
 
-  return {
-    count,
-    increase,
-    decrease,
-  };
+  return [count, increase, decrease];
 };
 ```
 
@@ -788,11 +780,7 @@ export const useCount = () => {
     return [increase, decrease];
   }, []); // 保持依赖数组为空，这样 increase 和 decrease 方法都只会被创建一次
 
-  return {
-    count,
-    increase,
-    decrease,
-  };
+  return [count, increase, decrease];
 };
 ```
 
