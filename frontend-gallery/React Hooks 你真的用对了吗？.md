@@ -448,7 +448,19 @@ function Example() {
 
 在上面的例子中，我们用 `useMemo` 来「记住」`users` 数组，不是因为数组本身的开销大，而是因为 `users ` 的引用在每次 render 时都会发生改变，从而导致子组件 `ExpensiveComponent` 重新渲染（可能会带来较大开销）。
 
-作者认为从语义上不应该使用 `useMemo`，而是应该使用 `useRef`，否则会消耗更多的内存和计算资源。但是，`useRef` 的实现其实是基于 `useMemo` 的，使用 `useRef` 就相当于使用了 `useMemo`。`useRef` 只不过是一个包裹了 `useMemo` 的「语法糖」。因此，我认为可以使用 `useMemo` 来保值的引用一致。
+作者认为从语义上不应该使用 `useMemo`，而是应该使用 `useRef`，否则会消耗更多的内存和计算资源。虽然在 React 中 `useRef` 和 `useMemo` 的实现有一点差别，但是当 `useMemo` 的依赖数组为空数组时，它和 `useRef` 的开销可以说相差无几。`useRef` 甚至可以直接用 `useMemo` 来实现，就像下面这样：
+
+
+
+```javascript
+const useRef = (v) => {
+  return useMemo(() => ({current: v}), []);
+};
+```
+
+
+
+因此，我认为使用 `useMemo` 来保持值的引用一致没有太大问题。
 
 
 
