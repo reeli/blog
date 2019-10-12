@@ -379,7 +379,7 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 
-> 注： `ExpensiveComponent` 包裹了 `React.memo` 。
+> 注： `ExpensiveComponent` 组件包裹了 `React.memo` 。
 
 
 
@@ -517,16 +517,27 @@ const useData = () => {
 
 
 
-回答出上面这几个问题，判断是否应该使用 `useMemo` 也就不再困难了。不过在实际项目中，还是最好定义出一套统一的规范，方便团队中多人协作。比如第一个问题，开销很大如何定义？如果没有明确的标准，执行起来会非常困难。因此，我总结了下面几条规则：
+回答出上面这几个问题，判断是否应该使用 `useMemo` 也就不再困难了。不过在实际项目中，还是最好定义出一套统一的规范，方便团队中多人协作。比如第一个问题，开销很大如何定义？如果没有明确的标准，执行起来会非常困难。因此，我总结了下面一些规则：
 
 
 
-> 1. 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），一般不需要使用 `useMemo`。
-> 2. 仅在组件内部用到 object、array、函数等（没有作为 props 传递给子组件），且没有用到其他 Hook 的依赖数组中，一般不需要使用 `useMemo`。
-> 3. 通过 `useMemo` 来保持引用的一致性：
+> 一、应该使用 `useMemo` 的场景
+>
+> 3. 保持引用相等：
 >    - 对于组件内部用到的 object、array、函数等，如果用在了其他 Hook 的依赖数组中，或者作为 props 传递给了下游组件，应该使用 `useMemo`。
 >    - 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
 >    - 使用 `Context` 时，如果 `Provider` 的 value 中定义的值（第一层）发生了变化，即便用了 Pure Component 或者 `React.memo`，仍然会导致子组件 re-render。这种情况下，仍然建议使用 `useMemo` 保持引用的一致性。
+>    
+> 2. 计算成本很高
+>
+>    - 比如 `cloneDeep` 一个很大并且层级很深的数据
+>
+>    
+>
+> 二、无需使用 useMemo 的场景
+>
+> 1. 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），一般不需要使用 `useMemo`。
+> 2. 仅在组件内部用到的 object、array、函数等（没有作为 props 传递给子组件），且没有用到其他 Hook 的依赖数组中，一般不需要使用 `useMemo`。
 
 
 
@@ -872,6 +883,7 @@ hooks  的一些规范：
 - 将相关的逻辑放到一起。state 和 useEffect。
 
 
+
 将方法静态化。也就是说，方法只创建一次，不会根据某些值的变化而二次创建。让我们来看一个例子：
 
    
@@ -906,3 +918,8 @@ export const useValues = () => {
 - 方法预先定义好，可以做到不根据值的变化而二次创建。
 
 定义好一些统一的规范，在实际项目中，更方便团队中多人协作，否则标准的规则不一致，执行起来会非常困难。 
+
+
+
+
+
