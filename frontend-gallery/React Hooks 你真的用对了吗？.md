@@ -77,8 +77,8 @@ function usePosition() {
 
 
 
-> 1. 将完全不相关的 state 拆分为多组 state。比如 `size` 和 `position`。
-> 2. 如果某些 state 是相互关联的，或者需要一起发生改变，就可以把它们合并为一组 state。比如 `left` 和 `top`。
+1. 将完全不相关的 state 拆分为多组 state。比如 `size` 和 `position`。
+2. 如果某些 state 是相互关联的，或者需要一起发生改变，就可以把它们合并为一组 state。比如 `left` 和 `top`。
 
 
 
@@ -327,17 +327,18 @@ const useValues = () => {
 
 
 
-说了这么多，归根到底都是为了写出更加清晰、易于维护的代码。如果发现依赖数组依赖过多，我们就需要重新审视自己的代码。
+说了这么多，归根到底都是为了写出更加清晰、易于维护的代码。如果发现依赖数组依赖过多，我们就需要重新审视自己的代码：
 
 
 
-> - 依赖数组依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
-> - 如果发现依赖数组依赖的值过多，我们应该采取一些方法来减少它。
->   - 去掉不必要的依赖。
->   - 将 Hook 拆分为更小的单元，每个 Hook 依赖于各自的依赖数组。
->   - 通过合并相关的 state，将多个依赖值聚合为一个。
->   - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
->   - 通过 `ref` 来读取可变变量的值，不过需要注意控制修改它的途径。
+1. 依赖数组依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
+
+2. 如果发现依赖数组依赖的值过多，我们应该采取一些方法来减少它。
+   - 去掉不必要的依赖。
+   - 将 Hook 拆分为更小的单元，每个 Hook 依赖于各自的依赖数组。
+   - 通过合并相关的 state，将多个依赖值聚合为一个。
+   - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
+   - 通过 `ref` 来读取可变变量的值，不过需要注意控制修改它的途径。
 
 
 
@@ -521,23 +522,26 @@ const useData = () => {
 
 
 
-> 一、应该使用 `useMemo` 的场景
->
-> 3. 保持引用相等：
->    - 对于组件内部用到的 object、array、函数等，如果用在了其他 Hook 的依赖数组中，或者作为 props 传递给了下游组件，应该使用 `useMemo`。
->    - 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
->    - 使用 `Context` 时，如果 `Provider` 的 value 中定义的值（第一层）发生了变化，即便用了 Pure Component 或者 `React.memo`，仍然会导致子组件 re-render。这种情况下，仍然建议使用 `useMemo` 保持引用的一致性。
->    
-> 2. 计算成本很高
->
->    - 比如 `cloneDeep` 一个很大并且层级很深的数据
->
->    
->
-> 二、无需使用 useMemo 的场景
->
-> 1. 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），一般不需要使用 `useMemo`。
-> 2. 仅在组件内部用到的 object、array、函数等（没有作为 props 传递给子组件），且没有用到其他 Hook 的依赖数组中，一般不需要使用 `useMemo`。
+一、应该使用 `useMemo` 的场景
+
+1. 保持引用相等：
+
+   - 对于组件内部用到的 object、array、函数等，如果用在了其他 Hook 的依赖数组中，或者作为 props 传递给了下游组件，应该使用 `useMemo`。
+
+   - 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
+
+   - 使用 `Context` 时，如果 `Provider` 的 value 中定义的值（第一层）发生了变化，即便用了 Pure Component 或者 `React.memo`，仍然会导致子组件 re-render。这种情况下，仍然建议使用 `useMemo` 保持引用的一致性。
+
+2. 成本很高的计算
+
+   - 比如 `cloneDeep` 一个很大并且层级很深的数据
+
+     
+
+二、无需使用 useMemo 的场景
+
+1. 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），一般不需要使用 `useMemo`。
+2. 仅在组件内部用到的 object、array、函数等（没有作为 props 传递给子组件），且没有用到其他 Hook 的依赖数组中，一般不需要使用 `useMemo`。
 
 
 
@@ -824,23 +828,39 @@ export const useCount = () => {
 
 
 1. 将完全不相关的 state 拆分为多组 state。
+
 2. 如果某些 state 是相互关联的，或者需要一起发生改变，就可以把它们合并为一组 state。
+
 3. 依赖数组依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
+
 4. 如果发现依赖数组依赖的值过多，我们应该采取一些方法来减少它。
    - 去掉不必要的依赖。
    - 将 Hook 拆分为更小的单元，每个 Hook 依赖于各自的依赖数组。
    - 通过合并相关的 state，将多个依赖值聚合为一个。
    - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
    - 通过 `ref` 来读取可变变量的值，不过需要注意控制修改它的途径。
-5. 为了确保不滥用 `useMemo`，我们定义了下面几条规则：
-   - 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），则不需要使用 `useMemo`。
-   - 对于组件内部用到的  object、array、函数等，如果没有用到其他 Hook 的依赖数组中，或者造成子组件 re-render，可以不使用 `useMemo`。
-   - 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
-6. Hooks、Render Props 和高阶组件都有各自的使用场景，具体使用哪一种要看实际情况。
-7. 若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。
-8. 自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。如果返回的值过多，则不建议使用。
-9. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
-10. 在使用 `useMemo` 或者 `useCallback` 时，可以借助 `ref` 或者 `setState` callback，确保返回的函数只创建一次。也就是说，函数不会根据依赖数组的变化而二次创建。
+   
+5. 应该使用 `useMemo` 的场景：
+   
+   - 保持引用相等
+   
+   - 成本很高的计算
+   
+6. 无需使用 `useMemo` 的场景：
+
+   - 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），一般不需要使用 `useMemo`。
+
+   - 仅在组件内部用到的 object、array、函数等（没有作为 props 传递给子组件），且没有用到其他 Hook 的依赖数组中，一般不需要使用 `useMemo`。
+
+7. Hooks、Render Props 和高阶组件都有各自的使用场景，具体使用哪一种要看实际情况。
+
+8. 若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。
+
+9. 自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。如果返回的值过多，则不建议使用。
+
+10. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
+
+11. 在使用 `useMemo` 或者 `useCallback` 时，可以借助 `ref` 或者 `setState` callback，确保返回的函数只创建一次。也就是说，函数不会根据依赖数组的变化而二次创建。
 
 
 
