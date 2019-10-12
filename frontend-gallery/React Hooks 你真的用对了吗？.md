@@ -370,7 +370,7 @@ interface IExampleProps {
 
 const Example = ({page, type}: IExampleProps) => {
   const resolvedValue = useMemo(() => {
-    getResolvedValue(page, type);
+    return getResolvedValue(page, type);
   }, [page, type]);
 
   return <ExpensiveComponent resolvedValue={resolvedValue}/>;
@@ -525,7 +525,7 @@ const useData = () => {
 
 # 问题四：Hooks 能替代高阶组件和 Render Props 吗？
 
-在 Hooks 出现之前，我们有两种方法可以复用组件逻辑：[Render Props](https://reactjs.org/docs/render-props.html) 和[高阶组件](https://reactjs.org/docs/higher-order-components.html)。但是这两种方法都可能会造成 JSX「嵌套地域」的问题。Hooks 的出现，让组件逻辑的复用变得更简单，同时解决了「嵌套地域」的问题。Hooks 之于 React 就像 async / await  之于 Promise 一样。
+在 Hooks 出现之前，我们有两种方法可以复用组件逻辑：[Render Props](https://reactjs.org/docs/render-props.html) 和[高阶组件](https://reactjs.org/docs/higher-order-components.html)。但是这两种方法都可能会造成 JSX「嵌套地狱」的问题。Hooks 的出现，让组件逻辑的复用变得更简单，同时解决了「嵌套地狱」的问题。Hooks 之于 React 就像 async / await  之于 Promise 一样。
 
 那 Hooks 能替代高阶组件和 Render Props 吗？官方给出的回答是，在高阶组件或者 Render Props 只渲染一个子组件时，Hook 提供了一种更简单的方式。不过在我看来，Hooks 并不能完全替代 Render Props 和高阶组件。接下来，我们会详细分析这个问题。
 
@@ -610,7 +610,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 ## 小结
 
-没有 Hooks 之前，高阶组件和 Render Props 本质上都是将复用逻辑提升到父组件中。而 Hooks 出现之后，我们将复用逻辑提取到组件顶层，而不是强行提升到父组件中。这样就能够避免 HOC 和 Render Props 带来的「嵌套地域」。但是，像 Context 的 `<Provider/>` 和 `<Consumer/>` 这样有父子层级关系（树状结构关系）的，还是只能使用 Render Props 或者 HOC。
+没有 Hooks 之前，高阶组件和 Render Props 本质上都是将复用逻辑提升到父组件中。而 Hooks 出现之后，我们将复用逻辑提取到组件顶层，而不是强行提升到父组件中。这样就能够避免 HOC 和 Render Props 带来的「嵌套地狱」。但是，像 Context 的 `<Provider/>` 和 `<Consumer/>` 这样有父子层级关系（树状结构关系）的，还是只能使用 Render Props 或者 HOC。
 
 
 
