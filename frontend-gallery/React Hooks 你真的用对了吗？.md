@@ -379,6 +379,10 @@ const Example = ({page, type}: IExampleProps) => {
 
 
 
+> 注： `ExpensiveComponent` 包裹了 `React.memo` 。
+
+
+
 在上面的例子中，渲染 `ExpensiveComponent` 的开销很大。所以，当 `resolvedValue` 的引用发生变化时，作者不想重新渲染这个组件。因此，作者使用了 `useMemo`，避免每次 render 重新计算 `resolvedValue`，导致它的引用发生改变，从而使下游组件 re-render。
 
 
@@ -517,9 +521,12 @@ const useData = () => {
 
 
 
-> 1. 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），则不需要使用 `useMemo`。
-> 2. 对于组件内部用到的  object、array、函数等，如果没有用到其他 Hook 的依赖数组中，或者造成子组件 re-render，可以不使用 `useMemo`。
-> 3. 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
+> 1. 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），一般不需要使用 `useMemo`。
+> 2. 仅在组件内部用到 object、array、函数等（没有作为 props 传递给子组件），且没有用到其他 Hook 的依赖数组中，一般不需要使用 `useMemo`。
+> 3. 通过 `useMemo` 来保持引用的一致性：
+>    - 对于组件内部用到的 object、array、函数等，如果用在了其他 Hook 的依赖数组中，或者作为 props 传递给了下游组件，应该使用 `useMemo`。
+>    - 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
+>    - 使用 `Context` 时，如果 `Provider` 的 value 中定义的值（第一层）发生了变化，即便用了 Pure Component 或者 `React.memo`，仍然会导致子组件 re-render。这种情况下，仍然建议使用 `useMemo` 保持引用的一致性。
 
 
 
@@ -838,13 +845,15 @@ export const useCount = () => {
 
 
 
+>  Provider 的 value 属性会拿第一层属性的值做 shallowEqual，即便 value 的引用是变的，但是 value.value 没有变化，还是不会 re-render child。
 
 
 
+1. 确实只有会 diff props 的组件才能避免 re-render，比如 Pure Component、React.memo 包裹的组件。不过还是建议保持 props 引用的一致性，毕竟你无法确定别人会不会把 props 又用到其他 Hook 的依赖数组中。
+2. 使用 Context 时，如果 Provider 的 value 中定义的值（第一层）发生了变化，即便用了 Pure Component 或者 React.memo，仍然会导致子组件的 re-render。所以这种情况下，仍然需要保持引用的一致性。
+3. 归根结底，保持引用的一致性很重要，不管你用 `useMemo` 还是 `useRef`。
 
 
-
------------
 
 
 
