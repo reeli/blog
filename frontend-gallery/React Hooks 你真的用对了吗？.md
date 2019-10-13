@@ -332,7 +332,6 @@ const useValues = () => {
 
 
 1. 依赖数组依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
-
 2. 如果发现依赖数组依赖的值过多，我们应该采取一些方法来减少它。
    - 去掉不必要的依赖。
    - 将 Hook 拆分为更小的单元，每个 Hook 依赖于各自的依赖数组。
@@ -525,18 +524,12 @@ const useData = () => {
 一、应该使用 `useMemo` 的场景
 
 1. 保持引用相等
-
    - 对于组件内部用到的 object、array、函数等，如果用在了其他 Hook 的依赖数组中，或者作为 props 传递给了下游组件，应该使用 `useMemo`。
-
    - 自定义 Hook 中暴露出来的 object、array、函数等，都应该使用 `useMemo` 。以确保当值相同时，引用不发生变化。
-
    - 使用 `Context` 时，如果 `Provider` 的 value 中定义的值（第一层）发生了变化，即便用了 Pure Component 或者 `React.memo`，仍然会导致子组件 re-render。这种情况下，仍然建议使用 `useMemo` 保持引用的一致性。
-
 2. 成本很高的计算
-
    - 比如 `cloneDeep` 一个很大并且层级很深的数据
 
-     
 
 二、无需使用 useMemo 的场景
 
@@ -644,7 +637,6 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
   - 替代 Class 的大部分用例，除了 `getSnapshotBeforeUpdate` 和 `componentDidCatch` 还不支持。
   - 提取复用逻辑。除了有明确父子关系的，其他场景都可以使用 Hooks。
 - Render Props：在组件渲染上拥有更高的自由度，可以根据父组件提供的数据进行动态渲染。适合有明确父子关系的场景。
-
 - 高阶组件：适合用来做注入，并且生成一个新的可复用组件。适合用来写插件。
 
 
@@ -655,7 +647,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 # 问题五： 使用 Hooks 时还有哪些好的实践？
 
-1. 若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。否则会产生更多开销。
+1、若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。否则会产生更多开销。
 
 
 
@@ -677,7 +669,7 @@ const [dataA, dataB] = useMemo(() => {
 
 
 
-2. 参考原生 Hooks 的设计，自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。但如果返回值的数量超过三个，还是建议返回一个对象。
+2、参考原生 Hooks 的设计，自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。但如果返回值的数量超过三个，还是建议返回一个对象。
 
    
 
@@ -696,11 +688,8 @@ const [visible, show, hide] = useToggle();
 
 
 
-3. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
-
-
-
-4. 在使用 `useMemo` 或者 `useCallback` 时，确保返回的函数只创建一次。也就是说，函数不会根据依赖数组的变化而二次创建。举个例子：
+3、`ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
+4、在使用 `useMemo` 或者 `useCallback` 时，确保返回的函数只创建一次。也就是说，函数不会根据依赖数组的变化而二次创建。举个例子：
 
 
 
@@ -759,7 +748,6 @@ function Counter() {
 
 
 - `increase` 的变化会导致频繁地绑定事件监听，以及解除事件监听。
-
 - 需求是只在组件 mount 时执行一次 `useEffect`，但是 `increase` 的变化会导致 `useEffect` 多次执行，不能满足需求。
 
 
@@ -768,7 +756,7 @@ function Counter() {
 
 
 
-一、通过 `setState` 回调，让函数不依赖外部变量。例如：
+1) 通过 `setState` 回调，让函数不依赖外部变量。例如：
 
 
 
@@ -793,7 +781,7 @@ export const useCount = () => {
 
 
 
-二、通过 `ref` 来保存可变变量。例如：
+2) 通过 `ref` 来保存可变变量。例如：
 
 
 
@@ -819,47 +807,29 @@ export const useCount = () => {
 ```
 
 
-
-
 # 最后
 
 我们总结了在实践中一些常见的问题，并提出了一些解决方案。最后让我们再来回顾一下：
 
-
-
 1. 将完全不相关的 state 拆分为多组 state。
-
 2. 如果某些 state 是相互关联的，或者需要一起发生改变，就可以把它们合并为一组 state。
-
 3. 依赖数组依赖的值最好不要超过 3 个，否则会导致代码会难以维护。
-
 4. 如果发现依赖数组依赖的值过多，我们应该采取一些方法来减少它。
    - 去掉不必要的依赖。
    - 将 Hook 拆分为更小的单元，每个 Hook 依赖于各自的依赖数组。
    - 通过合并相关的 state，将多个依赖值聚合为一个。
    - 通过 `setState` 回调函数获取最新的 state，以减少外部依赖。
    - 通过 `ref` 来读取可变变量的值，不过需要注意控制修改它的途径。
-   
 5. 应该使用 `useMemo` 的场景：
-   
    - 保持引用相等
-   
    - 成本很高的计算
-   
 6. 无需使用 `useMemo` 的场景：
-
    - 如果返回的值是原始值： `string`, `boolean`, `null`, `undefined`, `number`, `symbol`（不包括动态声明的 Symbol），一般不需要使用 `useMemo`。
-
    - 仅在组件内部用到的 object、array、函数等（没有作为 props 传递给子组件），且没有用到其他 Hook 的依赖数组中，一般不需要使用 `useMemo`。
-
 7. Hooks、Render Props 和高阶组件都有各自的使用场景，具体使用哪一种要看实际情况。
-
 8. 若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。
-
 9. 自定义 Hooks 的返回值可以使用 Tuple 类型，更易于在外部重命名。如果返回的值过多，则不建议使用。
-
 10. `ref` 不要直接暴露给外部使用，而是提供一个修改值的方法。
-
 11. 在使用 `useMemo` 或者 `useCallback` 时，可以借助 `ref` 或者 `setState` callback，确保返回的函数只创建一次。也就是说，函数不会根据依赖数组的变化而二次创建。
 
 
@@ -867,77 +837,6 @@ export const useCount = () => {
 参考文章：
 
 [You’re overusing useMemo: Rethinking Hooks memoization](https://blog.logrocket.com/rethinking-hooks-memoization/?from=singlemessage&isappinstalled=0)
-
-
-
-
-
-
-
-
-
->  Provider 的 value 属性会拿第一层属性的值做 shallowEqual，即便 value 的引用是变的，但是 value.value 没有变化，还是不会 re-render child。
-
-
-
-1. 确实只有会 diff props 的组件才能避免 re-render，比如 Pure Component、React.memo 包裹的组件。不过还是建议保持 props 引用的一致性，毕竟你无法确定别人会不会把 props 又用到其他 Hook 的依赖数组中。
-2. 使用 Context 时，如果 Provider 的 value 中定义的值（第一层）发生了变化，即便用了 Pure Component 或者 React.memo，仍然会导致子组件的 re-render。所以这种情况下，仍然需要保持引用的一致性。
-3. 归根结底，保持引用的一致性很重要，不管你用 `useMemo` 还是 `useRef`。
-
-
-
-
-
-方法静态化。
-
-方法开销大不大，如何具体评估？
-
-useEffect hook 的执行顺序
-
-hooks  的一些规范：
-
-- Hooks 内部依赖的方法应该放到 callback 内部，如果不能可以采用其他方法...
-- 若 hook 类型相同，且 deps 一致时，应该合并成一个 hook
-- ref 的使用要小心
-- 使用 Tuple 还是对象？
-- 将相关的逻辑放到一起。state 和 useEffect。
-
-
-
-将方法静态化。也就是说，方法只创建一次，不会根据某些值的变化而二次创建。让我们来看一个例子：
-
-   
-
-```javascript
-export const useValues = () => {
-  const [values, setValues] = useState();
-
-  const updateValues = useMemo(
-    () => (nextValues) => {
-      setValues({
-        ...values,
-        ...nextValues,
-      });
-    },
-    [values],
-  );
-
-  return [values, updateValues];
-};
-```
-
-
-
-在上面的例子中，为了避免每次 render 时都去创建 `updateValues` 函数，我们使用了 `useMemo`。只有当 `values` 发生变化时，才会重新创建 `updateValues` 函数。我们把 `updateValues` 函数暴露出去给外部使用。
-
-- setState 为什么可以直接在闭包中使用？
-- 方法导致频繁的创建和销毁 useEffect，可能会造成混乱
-- 自定义 Hooks 中暴露出来的值都应该使用 useMemo，因为不确定外部会如何使用
-- 组件内部的方法或者值，如果要传递给子组件的，加 useMemo，否则可以不用加。
-- useMemo 和 useRef？useRef 只是 useMemo 的语法糖？
-- 方法预先定义好，可以做到不根据值的变化而二次创建。
-
-定义好一些统一的规范，在实际项目中，更方便团队中多人协作，否则标准的规则不一致，执行起来会非常困难。 
 
 
 
