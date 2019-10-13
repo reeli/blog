@@ -524,7 +524,7 @@ const useData = () => {
 
 一、应该使用 `useMemo` 的场景
 
-1. 保持引用相等：
+1. 保持引用相等
 
    - 对于组件内部用到的 object、array、函数等，如果用在了其他 Hook 的依赖数组中，或者作为 props 传递给了下游组件，应该使用 `useMemo`。
 
