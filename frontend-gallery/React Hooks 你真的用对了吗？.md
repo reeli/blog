@@ -842,3 +842,69 @@ export const useCount = () => {
 
 
 
+----------分割线--------
+
+>  Provider 的 value 属性会拿第一层属性的值做 shallowEqual，即便 value 的引用是变的，但是 value.value 没有变化，还是不会 re-render child。
+
+
+
+1. 确实只有会 diff props 的组件才能避免 re-render，比如 Pure Component、React.memo 包裹的组件。不过还是建议保持 props 引用的一致性，毕竟你无法确定别人会不会把 props 又用到其他 Hook 的依赖数组中。
+2. 使用 Context 时，如果 Provider 的 value 中定义的值（第一层）发生了变化，即便用了 Pure Component 或者 React.memo，仍然会导致子组件的 re-render。所以这种情况下，仍然需要保持引用的一致性。
+3. 归根结底，保持引用的一致性很重要，不管你用 `useMemo` 还是 `useRef`。
+
+
+
+
+
+方法静态化。
+
+方法开销大不大，如何具体评估？
+
+useEffect hook 的执行顺序
+
+hooks  的一些规范：
+
+- Hooks 内部依赖的方法应该放到 callback 内部，如果不能可以采用其他方法...
+- 若 hook 类型相同，且 deps 一致时，应该合并成一个 hook
+- ref 的使用要小心
+- 使用 Tuple 还是对象？
+- 将相关的逻辑放到一起。state 和 useEffect。
+
+
+
+将方法静态化。也就是说，方法只创建一次，不会根据某些值的变化而二次创建。让我们来看一个例子：
+
+   
+
+```javascript
+export const useValues = () => {
+  const [values, setValues] = useState();
+
+  const updateValues = useMemo(
+    () => (nextValues) => {
+      setValues({
+        ...values,
+        ...nextValues,
+      });
+    },
+    [values],
+  );
+
+  return [values, updateValues];
+};
+```
+
+
+
+在上面的例子中，为了避免每次 render 时都去创建 `updateValues` 函数，我们使用了 `useMemo`。只有当 `values` 发生变化时，才会重新创建 `updateValues` 函数。我们把 `updateValues` 函数暴露出去给外部使用。
+
+- setState 为什么可以直接在闭包中使用？
+- 方法导致频繁的创建和销毁 useEffect，可能会造成混乱
+- 自定义 Hooks 中暴露出来的值都应该使用 useMemo，因为不确定外部会如何使用
+- 组件内部的方法或者值，如果要传递给子组件的，加 useMemo，否则可以不用加。
+- useMemo 和 useRef？useRef 只是 useMemo 的语法糖？
+- 方法预先定义好，可以做到不根据值的变化而二次创建。
+
+定义好一些统一的规范，在实际项目中，更方便团队中多人协作，否则标准的规则不一致，执行起来会非常困难。 
+
+
