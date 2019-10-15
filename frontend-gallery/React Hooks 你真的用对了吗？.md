@@ -157,7 +157,11 @@ const refresh = useCallback(() => {
 ```javascript
 function Example({id}) {
   const requestParams = useRef({});
-  requestParams.current = {page: 1, size: 20, id};
+
+  useEffect(() => {
+    requestParams.current = {page: 1, size: 20, id};
+  });
+
 
   const refresh = useCallback(() => {
     doRefresh(requestParams.current);
@@ -165,7 +169,7 @@ function Example({id}) {
 
 
   useEffect(() => {
-    id && refresh(); 
+    id && refresh();
   }, [id, refresh]); // 思考这里的 deps list 是否合理？
 }
 ```
@@ -308,14 +312,18 @@ const useValues = () => {
 const useValues = () => {
   const [values, setValues] = useState({});
   const latestValues = useRef(values);
-  latestValues.current = values;
+
+  useEffect(() => {
+    latestValues.current = values;
+  });
+
 
   const [updateData] = useCallback((nextData) => {
     setValues({
       data: nextData,
       count: latestValues.current.count + 1,
     });
-  }, []); 
+  }, []);
 
   return [values, updateData];
 };
@@ -789,7 +797,10 @@ export const useCount = () => {
 export const useCount = () => {
   const [count, setCount] = useState(0);
   const countRef = useRef(count);
-  countRef.current = count;
+
+  useEffect(() => {
+    countRef.current = count;
+  });
 
   const [increase, decrease] = useMemo(() => {
     const increase = () => {
