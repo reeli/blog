@@ -9,7 +9,7 @@
 
 
 
-我们可以实现一些 Hooks API，从而找出问题的答案。通过这种方式，更轻松地去理解 Hooks 的原理。这篇文章参考 [preact](https://github.com/preactjs/preact/blob/master/hooks/src/index.js) 的源码，虽然和 React 的实现有些差异，但核心思想是一样的。
+我们可以实现一些 Hooks API，从中找出问题的答案。这篇文章参考 [preact](https://github.com/preactjs/preact/blob/master/hooks/src/index.js) 的源码，虽然和 React 的实现有些差异，但核心思想是一样的。
 
 
 
@@ -99,7 +99,15 @@ function useState(initialState?: any) {
 
   return [state, setState] as [typeof state, typeof setState];
 }
+```
 
+
+
+使用时：
+
+
+
+```typescript
 const [count, setCount] = useState(0);
 setCount(5);
 
@@ -108,7 +116,54 @@ console.log(count); // output: 0
 
 
 
-可以看出，结果并不理想，`count` 的值永远都是 0。因为 `count` 发生变化之后，我们并没有重新执行 `useState`，所以得到的值始终都是初始值。但是，如果重新执行 `useState`，那么它内部的状态就会丢失。
+可以看出，结果并不理想，`count` 的值永远都是 0。因为 `count` 发生变化之后，我们并没有重新执行 `useState`，所以得到的值始终都是初始值。但是，如果再次执行 `useState`，它内部的状态就会丢失。怎么办呢？
+
+
+
+由于 `setState` 会导致组件 re-render，并且每次 render 都会执行 `useState` 函数，因此必须将状态提升到更外层的作用域中。
+
+
+
+```typescript
+let component = {
+  memorizeState: undefined,
+};
+
+function useState(initialState?: any) {
+  component.memorizeState =  component.memorizeState || initialState;
+
+  function setState(newState?: any) {
+    component.memorizeState = newState;
+    render(); // 重新渲染组件
+  }
+
+  return [component.memorizeState, setState] as [typeof component.memorizeState, typeof setState];
+}
+```
+
+
+
+使用时：
+
+
+
+```typescript
+const [count, setCount] = useState(0);
+console.log(count); // 首次 render 时，获取 count 的初始值 0
+
+setCount(5);        // 修改状态，导致组件 re-render
+
+const [count1] = useState(0); // 第二次 render 时，再次执行 useState
+console.log(count1);          // 由于 count 的值已经被修改了，所以返回值是修改后的 5
+```
+
+
+
+看起来不错，调用多次 `useState` 试试。
+
+
+
+
 
 
 
