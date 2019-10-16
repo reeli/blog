@@ -4,22 +4,18 @@
 
 1. 函数组件内部没有存储状态，那么状态保存在什么地方，又是如何保存的？
 2. 同一个组件中多次调用 `useState`，如何保证得到的每个 state 是相互独立的？
-4. 为什么不能在 Class 组件中使用 Hooks？
 5. 为什么不能在循环、条件语句或者嵌套函数中使用 Hooks？
+4. 为什么不能在 Class 组件中使用 Hooks？
 
 
 
-为了解答这些疑问，我去阅读了 React 中的相关源码。但 React 源码晦涩难懂，很难快速找出问题的答案。那不如自己简单实现一些 Hooks API，从中领悟 Hooks 的设计和原理。
-
-
-
-这篇文章参考 [preact](https://github.com/preactjs/preact/blob/master/hooks/src/index.js) 的源码，通过一种简单的方式去实现 React Hooks 的核心 API。虽然和 React 的实现有些差异，但核心思想是一样的。我们可以通过这种方式，更轻松地去理解 Hooks 的原理。
+我们可以实现一些 Hooks API，从而找出问题的答案。通过这种方式，更轻松地去理解 Hooks 的原理。这篇文章参考 [preact](https://github.com/preactjs/preact/blob/master/hooks/src/index.js) 的源码，虽然和 React 的实现有些差异，但核心思想是一样的。
 
 
 
 ## useState
 
-我们知道，一个函数运行完之后，它内部的变量和数据会自动销毁。也就是说，函数本身无法保存状态。`useState ` 让函数组件拥有状态。它接收一个参数作为初始值，返回一个状态以及修改这个状态的方法。
+我们知道，一个函数运行完之后，它内部的变量和数据会自动销毁。也就是说，函数本身无法保存状态。但是，函数组件却可以通过 `useState` 来保存状态。
 
 
 
@@ -33,9 +29,123 @@ function Counter() {
 
 
 
-从上面的例子来看，`Counter` 组件中并没有保存 `count` 状态。但是，这个状态一定保存在某个地方。
+> 函数组件也是一个函数，每次 render 都会重新执行这个函数。
 
 
+
+从上面的例子来看，`Counter` 组件中并没有保存 `count` 状态。那么，状态保存在什么地方？回答这个问题之前，我们不妨换个角度想想，哪些地方能够保存状态？全局变量、Class 实例、闭包（文件作用域本质上也是闭包）、LocalStorage、IndexedDB、Cookie…… 这么多保存变量的地方，怎么选？
+
+首先，排除全局变量、LocalStorage、IndexedDB 和 Cookie，因为它们会带来副作用。这样一来，就只剩下 Class 和闭包。让我们再仔细看看，它们是如何保存状态的：
+
+
+
+Class：
+
+```typescript
+class Counter {
+  private count: number;
+
+  constructor() {
+    this.count = 0;
+  }
+
+  increase() {
+    this.count = this.count + 1;
+    return this.count;
+  }
+}
+
+const counter = new Counter();
+counter.increase(); // output: 1
+counter.increase(); // output: 2
+```
+
+
+
+闭包：
+
+```typescript
+function Counter() {
+  let count = 0;
+  return {
+    increase: () => {
+      count = count + 1;
+      return count;
+    }
+  };
+}
+
+const { increase } = Counter();
+
+increase(); // output: 1
+increase(); // output: 2
+```
+
+
+
+由于 Class 会带来[诸多问题](https://reactjs.org/docs/hooks-intro.html#classes-confuse-both-people-and-machines)，因此闭包就成了最好的选择。
+
+对于 `useState` 来说，可以利用闭包来保存 state。它接受一个参数作为初始值，返回状态以及修改状态的方法。代码如下：
+
+
+
+```typescript
+function useState(initialState?: any) {
+  let state = initialState;
+
+  function setState(newState?: any) {
+    state = newState;
+  }
+
+  return [state, setState] as [typeof state, typeof setState];
+}
+
+const [count, setCount] = useState(0);
+setCount(5);
+
+console.log(count); // output: 0
+```
+
+
+
+可以看出，结果并不理想，`count` 的值永远都是 0。因为 `count` 发生变化之后，我们并没有重新执行 `useState`，所以得到的值始终都是初始值。但是，如果重新执行 `useState`，那么它内部的状态就会丢失。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+`useState ` 它接收一个参数作为初始值，返回状态以及修改状态的方法。
+
+
+
+
+
+
+
+- fiber
+- function 组件 和 component 组件
+
+- render 阶段
+
+- Commit 阶段
+
+  
 
 
 
