@@ -563,15 +563,12 @@ const useData = () => {
 ```javascript
 function enhance(Comp) {
   // 增加一些其他的功能
-  return class extends Component {
+  return function Component() {
     // ...
-    render() {
       return <Comp />;
-    }
   };
 }
 ```
-
 
 
 高阶组件采用了装饰器模式，让我们可以增强原有组件的功能，并且不破坏它原有的特性。例如：
@@ -854,6 +851,32 @@ export const useCount = () => {
 
 
 ----------分割线--------
+
+- function component 的 children  中不能使用 hook。
+- 高阶组件中会生成一个新的组件，一个准备数据，一个用来真正渲染的情况。
+- 通过一些 hooks 准备数据，然后其他 hooks 又强依赖于这些数据。如果数据为空，其他 hooks 内部的逻辑要发生变化，如果再在每一个 hooks 里面去加这一层逻辑，会显得很繁琐。因此，还不如拆成两个组件，一个准备数据，有数据了之后下面的组件再渲染，就不需要在每个 hook 中再去关心是否有数据的问题了。
+
+```typescript
+type NonNullableArray<TArr> = { [I in keyof TArr]: NonNullable<TArr[I]> };
+
+export function must<TPrepare extends Readonly<Array<any>>>(usePrepare: () => TPrepare) {
+  return function <TProps>(render: (props: TProps, ...prepare: NonNullableArray<TPrepare>) => JSX.Element | null) {
+    const C = (props: TProps & { ["data-prepare"]: NonNullableArray<TPrepare> }) =>
+        render(props, ...(props["data-prepare"] as any));
+
+    return (props: TProps) => {
+      const prepare = usePrepare();
+
+      if (some(prepare, (a) => !a)) {
+        return null;
+      }
+
+      return <C {...props} data-prepare={prepare as NonNullableArray<TPrepare>}/>;
+    };
+  };
+}
+```
+
 
 >  Provider 的 value 属性会拿第一层属性的值做 shallowEqual，即便 value 的引用是变的，但是 value.value 没有变化，还是不会 re-render child。
 

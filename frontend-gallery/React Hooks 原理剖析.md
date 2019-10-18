@@ -163,6 +163,7 @@ console.log(count1);          // 由于 count 的值已经被修改了，所以�
 
 
 
+问题：function component 中闭包是如何形成的？
 
 
 
