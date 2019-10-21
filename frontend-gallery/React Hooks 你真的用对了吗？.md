@@ -852,6 +852,40 @@ export const useCount = () => {
 
 ----------分割线--------
 
+
+
+useMemo 可能带来的成本：
+
+1. 使代码变得更复杂
+2. 防止依赖项和 memoized 值被垃圾收集，而使性能变差
+
+
+计算很大的开销， clone deep 100 W 数据的耗时测试：
+ 
+```js
+let a = {};
+for (let i = 0; i < 1000000; i++) {
+  a[i] = {
+    a: 1,
+    b: 2,
+    c: {
+      c1: 1,
+      c2: 2,
+    },
+  };
+}
+
+const start = window.performance.now();
+
+_.cloneDeep(a);
+
+const time = window.performance.now() - start;
+
+console.log(time);
+```
+
+
+
 - function component 的 children  中不能使用 hook。
 - 高阶组件中会生成一个新的组件，一个准备数据，一个用来真正渲染的情况。
 - 通过一些 hooks 准备数据，然后其他 hooks 又强依赖于这些数据。如果数据为空，其他 hooks 内部的逻辑要发生变化，如果再在每一个 hooks 里面去加这一层逻辑，会显得很繁琐。因此，还不如拆成两个组件，一个准备数据，有数据了之后下面的组件再渲染，就不需要在每个 hook 中再去关心是否有数据的问题了。

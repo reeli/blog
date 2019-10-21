@@ -159,11 +159,55 @@ console.log(count1);          // 由于 count 的值已经被修改了，所以�
 
 
 
-看起来不错，调用多次 `useState` 试试。
+到目前为止，看起来不错。让我们试试调用多次 `useState` ：
 
 
 
-问题：function component 中闭包是如何形成的？
+```typescript
+import ReactDOM from "react-dom";
+import React from "react";
+
+interface IComponent {
+  memorizeState: any;
+}
+
+let component: IComponent = {
+  memorizeState: undefined,
+};
+
+function useState<T = any>(initialState?: T) {
+  component.memorizeState = component.memorizeState || initialState;
+
+  function setState(newState?: T) {
+    component.memorizeState = newState;
+    render(); // 重新渲染组件
+  }
+
+  return [component.memorizeState, setState] as const;
+}
+
+function Counter() {
+  const [count, setCount] = useState<number>(0);
+  const [times, setTimes] = useState<number>(100);
+
+  return (
+    <div>
+      <div onClick={() => setCount(count + 1)}>{count}</div>
+      <div onClick={() => setTimes(times + 1)}>{times}</div>
+    </div>
+  );
+}
+
+function render() {
+  ReactDOM.render(<Counter />, document.body);
+}
+
+render();
+```
+
+
+
+两次 setState 修改到了同一个值。怎么办呢？
 
 
 
@@ -173,7 +217,13 @@ console.log(count1);          // 由于 count 的值已经被修改了，所以�
 
 
 
+**问题：**
 
+1. function component 中闭包是如何形成的？preact 的 component 算全局作用域还是闭包？
+2. 高阶组件中使用 Hooks，TypeScript 定义的问题
+3. useMemo 中的闭包是怎么生成的？
+4. useMemo 中把 callback 存下来是为什么？
+5. useEffect 里面是否还需要 render ? 
 
 
 
@@ -247,6 +297,243 @@ console.log(count1);          // 由于 count 的值已经被修改了，所以�
 
 # useContext
 
+拿 useState 来说，在一个组件中，每一次调用 useState，我们都需要保存一组 state 和 setState。因此，我们需要一个唯一标识来标记每一次 Hook 调用。可以通过 idx，也可以通过 id。id 可能存在命名冲突的问题，而且接口也不简洁。index 可以让接口比较简洁，但是需要定义一些规范，否则我们无法通过 index 取到正确的值。于是就有了 Hooks 定义的规范：
+
+- 只能在 React Function 的顶层调用 Hooks。不能在循环、条件语句或者嵌套函数（比如 Callback）中使用 Hooks。
+
+
+
+用 index 获取 Hook 的方式：
+
+```typescript
+import ReactDOM from "react-dom";
+import React from "react";
+
+interface IComponent {
+  __hooks: any[];
+}
+
+let currentIdx = 0;
+let component: IComponent = {
+  __hooks: [],
+};
+
+// 根据 currentIdx 获取到当前 hook
+function getHookState(currentIdx: number) {
+  const hooks = component.__hooks;
+  if (currentIdx >= hooks.length) {
+    hooks.push({});
+  }
+  return hooks[currentIdx];
+}
+
+function useState<T = any>(initialState: T) {
+  const hookState = getHookState(currentIdx++);
+
+  function setState(nextState: T) {
+    if (hookState._value[0] !== nextState) {
+      hookState._value[0] = nextState;
+      render();
+    }
+  }
+
+  hookState._value = [hookState._value ? hookState._value[0] : initialState, setState];
+  return hookState._value;
+}
+
+function Counter() {
+  const [count, setCount] = useState<number>(0);
+  const [count1, setCount1] = useState<number>(2);
+
+  return (
+    <div>
+      <div onClick={() => setCount(count + 1)}>{count}</div>
+      <div onClick={() => setCount1(count1 + 1)}>{count1}</div>
+    </div>
+  );
+}
+
+function render() {
+  console.log(component);
+  currentIdx = 0; // 重置 currentIdx 非常关键
+  ReactDOM.render(<Counter />, document.body);
+}
+
+render();
+```
+
+
+
+用 ID 获取 hook 的方式：
+
+
+
+```typescript
+import ReactDOM from "react-dom";
+import React from "react";
+
+interface IComponent {
+  __hooks: {
+    [key: string]: any;
+  };
+}
+
+let component: IComponent = {
+  __hooks: {},
+};
+
+// 根据 id 获取到当前 hook
+function getHookState(id: string) {
+  const hooks = component.__hooks;
+  hooks[id] = hooks[id] ? hooks[id] : {};
+  return hooks[id];
+}
+
+function useState<T = any>(initialState: T, id: string) {
+  const hookState = getHookState(id);
+
+  function setState(nextState: T) {
+    if (hookState._value[0] !== nextState) {
+      hookState._value[0] = nextState;
+      render();
+    }
+  }
+
+  hookState._value = [hookState._value ? hookState._value[0] : initialState, setState];
+  return hookState._value;
+}
+
+function Counter() {
+  const [count, setCount] = useState<number>(0, "count");
+  const [count1, setCount1] = useState<number>(2, "count2");
+
+  return (
+    <div>
+      <div onClick={() => setCount(count + 1)}>Click me {count}</div>
+      <div onClick={() => setCount1(count1 + 1)}>Click me {count1}</div>
+    </div>
+  );
+}
+
+function render() {
+  ReactDOM.render(<Counter />, document.body);
+}
+
+render();
+```
+
+
+
+
+
+分别在 render props 和 高阶组件中使用 Hooks:
+
+
+
+高阶组件中：
+
+
+
+```typescript
+import React, { useState } from "react";
+import { render } from "react-dom";
+
+interface ICounterProps {
+  updateVisible: () => void;
+}
+
+function Counter({ updateVisible }: ICounterProps) {
+  const [count, setCount] = useState(0);
+  return (
+    <div>
+      <div>{count}</div>
+      <button onClick={() => setCount(count + 1)}>increase count</button>
+      <button onClick={updateVisible}>toggle visible state</button>
+    </div>
+  );
+}
+
+export function enhance(Comp: (props: any) => JSX.Element) {
+  return function(props: any) {
+    const [visible, setVisible] = useState(true);
+    return visible ? <Comp {...props} updateVisible={() => setVisible(false)} /> : null;
+  };
+}
+
+const B = enhance(Counter);
+
+render(<B />, document.body);
+```
+
+
+
+Render Props 中：
+
+
+
+```typescript
+import React, { useState } from "react";
+import { render } from "react-dom";
+
+interface ICounterProps {
+  updateVisible: () => void;
+}
+
+function Counter({ updateVisible }: ICounterProps) {
+  const [count, setCount] = useState(0);
+  return (
+    <div>
+      <div>{count}</div>
+      <button onClick={() => setCount(count + 1)}>increase count</button>
+      <button onClick={updateVisible}>toggle visible state</button>
+    </div>
+  );
+}
+
+export function EnhancedCounter({ children }: { children: (props: ICounterProps) => JSX.Element }) {
+  const [visible, setVisible] = useState(true);
+  return visible
+    ? children({
+        updateVisible: () => setVisible(!visible),
+      })
+    : null;
+}
+
+function B() {
+  return <EnhancedCounter>{({ updateVisible }) => <Counter updateVisible={updateVisible} />}</EnhancedCounter>;
+}
+
+render(<B />, document.body);
+```
+
+
+
+这样写也不会有问题，但是当你把 Counter  组件 inline 时，就可能出现问题。比如：
+
+
+
+```typescript
+function B() {
+  return (
+    <EnhancedCounter>
+      {({ updateVisible }) => {
+        const [count, setCount] = useState(0);
+        return (
+          <div>
+            <div>{count}</div>
+            <button onClick={() => setCount(count + 1)}>increase count</button>
+            <button onClick={updateVisible}>toggle visible state</button>
+          </div>
+        );
+      }}
+    </EnhancedCounter>
+  );
+}
+```
+
+
+
+因为 render props 和它的 children 其实都是挂载在 EnhancedCounter 组件上的，所以当 EnhancedCounter 中有条件判断时，会导致 Hooks 的顺序不一致。但是，高阶组件会产生两个组件，Counter 是一个完整组件，里面 hooks 可以正常使用，不存在挂载点外移的情况。
 
 
 
@@ -254,12 +541,52 @@ console.log(count1);          // 由于 count 的值已经被修改了，所以�
 
 
 
+解释闭包：
 
 
 
+「函数」和「函数内部能访问到的变量或者参数」（也叫环境）的总和，就是一个闭包。
 
 
 
+这个例子不能生成闭包，因为 init 执行完成之后，就再也不能访问 init 内部的 name 变量了。
+
+```typescript
+function init() {
+    var name = "Mozilla"; // name 是一个被 init 创建的局部变量
+    function displayName() { // displayName() 是内部函数,一个闭包
+        alert(name); // 使用了父函数中声明的变量
+    }
+    displayName();
+}
+init();
+```
+
+
+
+下面这个例子才会生成闭包：
+
+```typescript
+function makeFunc() {
+    var name = "Mozilla";
+    function displayName() {
+        alert(name);
+    }
+    return displayName;
+}
+
+var myFunc = makeFunc();
+myFunc();
+```
+
+
+
+- 词法作用域根据声明变量的位置来确定该变量可被访问的位置。嵌套函数可获取声明于外部作用域的函数。闭包可以让你从内部函数访问外部函数作用域。
+- 闭包是由函数以及创建该函数的词法环境组合而成。**这个环境包含了这个闭包创建时所能访问的所有局部变量**。
+
+
+
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Closures
 
 
 
@@ -283,3 +610,4 @@ console.log(count1);          // 由于 count 的值已经被修改了，所以�
 > 直观来看，好像造成这种差异是因为在class里，我们能通过this保存和访问“状态(state)”，而函数组件在其作用域内难以维持“状态(state)”，因为再次函数运行会重置其作用域内部变量，这种差异导致了我们“不得不”使用class至今。
 
 嵌套地域 -> 俄罗斯套娃
+
