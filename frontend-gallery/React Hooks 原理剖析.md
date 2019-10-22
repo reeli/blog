@@ -2,20 +2,20 @@
 
 
 
-1. 函数组件内部没有存储状态，那么状态保存在什么地方，又是如何保存的？
-2. 同一个组件中多次调用 `useState`，如何保证得到的每个 state 是相互独立的？
+1. 函数组件持有的状态保存在什么地方？如何保证每次 render 取到正确的状态？
+2. 同一个组件中多次调用 `useState`，如何保证返回的每个 state 是相互独立的？
 5. 为什么不能在循环、条件语句或者嵌套函数中使用 Hooks？
 4. 为什么不能在 Class 组件中使用 Hooks？
 
 
 
-我们可以实现一些 Hooks API，从中找出问题的答案。这篇文章参考 [preact](https://github.com/preactjs/preact/blob/master/hooks/src/index.js) 的源码，虽然和 React 的实现有些差异，但核心思想是一样的。
+我们可以实现一些 Hooks API，从中找出问题的答案。虽然和 React 的实现有些差异，但核心思想是一样的。
 
 
 
 ## useState
 
-我们知道，一个函数运行完之后，它内部的变量和数据会自动销毁。也就是说，函数本身无法保存状态。但是，函数组件却可以通过 `useState` 来保存状态。
+一个函数运行完之后，它内部的变量和数据就会自动销毁。函数组件也是函数，组件每次渲染时 React 都会重新调用这个函数，它内部的变量和数据也会随之销毁。因此，如果要让函数组件持有状态，那么这个状态一定不能保存在函数组件内部。我们已经知道，函数组件可以通过 `useState` 来保存状态，例如：
 
 
 
@@ -29,13 +29,24 @@ function Counter() {
 
 
 
-> 函数组件也是一个函数，每次 render 都会重新执行这个函数。
+从这个例子可以看出，`Counter` 组件中确实并没有保存 `count` 状态。那么，状态保存在什么地方？回答这个问题之前，我们不妨换个角度想想，哪些地方能够保存状态？全局变量、Class 实例、闭包、LocalStorage、IndexedDB、Cookie…… 这么多保存状态的地方，如何选择？
+
+首先排除 LocalStorage、IndexedDB 和 Cookie，因为它们会带来副作用以及兼容性问题。这样一来，就只剩下全局变量、Class 和闭包。接下来，让我们再仔细看看，它们分别是如何保存状态的。
 
 
 
-从上面的例子来看，`Counter` 组件中并没有保存 `count` 状态。那么，状态保存在什么地方？回答这个问题之前，我们不妨换个角度想想，哪些地方能够保存状态？全局变量、Class 实例、闭包（文件作用域本质上也是闭包？）、LocalStorage、IndexedDB、Cookie…… 这么多保存变量的地方，怎么选？
+全局变量：
 
-首先，排除全局变量、LocalStorage、IndexedDB 和 Cookie，因为它们会带来副作用。这样一来，就只剩下 Class 和闭包。让我们再仔细看看，它们是如何保存状态的：
+```typescript
+let count = 0;
+
+function increase() {
+  return count = count + 1;
+}
+
+increase(); // output: 1
+increase(); // output: 2
+```
 
 
 
@@ -50,8 +61,7 @@ class Counter {
   }
 
   increase() {
-    this.count = this.count + 1;
-    return this.count;
+    return this.count = this.count + 1;
   }
 }
 
@@ -67,15 +77,13 @@ counter.increase(); // output: 2
 ```typescript
 function Counter() {
   let count = 0;
+
   return {
-    increase: () => {
-      count = count + 1;
-      return count;
-    }
-  };
+    increase: () => count = count + 1
+  }
 }
 
-const { increase } = Counter();
+const {increase} = Counter();
 
 increase(); // output: 1
 increase(); // output: 2
@@ -83,27 +91,27 @@ increase(); // output: 2
 
 
 
-由于 Class 会带来[诸多问题](https://reactjs.org/docs/hooks-intro.html#classes-confuse-both-people-and-machines)，因此闭包就成了最好的选择。
-
-对于 `useState` 来说，可以利用闭包来保存 state。它接受一个参数作为初始值，返回状态以及修改状态的方法。代码如下：
+全局变量的问题不用多说，很多人都深有体会。Class 也会带来[诸多问题](https://reactjs.org/docs/hooks-intro.html#classes-confuse-both-people-and-machines)。最后可供选择的就只有闭包了。接下来，我们就用闭包的方式来实现 `useState`。
 
 
 
 ```typescript
-function useState(initialState?: any) {
+// `useState` 接收一个参数作为初始值，返回状态以及修改状态的方法
+
+export function useState<T = any>(initialState?: T) {
   let state = initialState;
 
-  function setState(newState?: any) {
+  function setState(newState?: T) {
     state = newState;
   }
 
-  return [state, setState] as [typeof state, typeof setState];
+  return [state, setState] as const;
 }
 ```
 
 
 
-使用时：
+在上面的例子中，我们将 state 保存在 `useState` 内部，通过 `setState` 的返回值获取最新的 state。这样做明显是不可行的，也不符合 React 数据驱动的理念。在 React 中， `setState` 不会返回更新后的状态。如果想要获取最新的 state，我们必须再次执行 `useState`。
 
 
 
@@ -113,6 +121,16 @@ setCount(5);
 
 console.log(count); // output: 0
 ```
+
+
+
+
+
+
+
+
+
+对于 `useState` 来说，可以利用闭包来保存 state。它接受一个参数作为初始值，返回状态以及修改状态的方法。代码如下：
 
 
 
@@ -592,7 +610,9 @@ https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Closures
 
 
 
+# 参考
 
+这篇文章参考 [preact](https://github.com/preactjs/preact/blob/master/hooks/src/index.js) 的源码，
 
 
 
