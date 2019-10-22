@@ -33,7 +33,7 @@ function Counter() {
 
 
 
-从上面的例子来看，`Counter` 组件中并没有保存 `count` 状态。那么，状态保存在什么地方？回答这个问题之前，我们不妨换个角度想想，哪些地方能够保存状态？全局变量、Class 实例、闭包（文件作用域本质上也是闭包）、LocalStorage、IndexedDB、Cookie…… 这么多保存变量的地方，怎么选？
+从上面的例子来看，`Counter` 组件中并没有保存 `count` 状态。那么，状态保存在什么地方？回答这个问题之前，我们不妨换个角度想想，哪些地方能够保存状态？全局变量、Class 实例、闭包（文件作用域本质上也是闭包？）、LocalStorage、IndexedDB、Cookie…… 这么多保存变量的地方，怎么选？
 
 首先，排除全局变量、LocalStorage、IndexedDB 和 Cookie，因为它们会带来副作用。这样一来，就只剩下 Class 和闭包。让我们再仔细看看，它们是如何保存状态的：
 
@@ -439,10 +439,11 @@ import React, { useState } from "react";
 import { render } from "react-dom";
 
 interface ICounterProps {
+  v: string;
   updateVisible: () => void;
 }
 
-function Counter({ updateVisible }: ICounterProps) {
+function Counter({ v, updateVisible }: ICounterProps) {
   const [count, setCount] = useState(0);
   return (
     <div>
@@ -453,16 +454,17 @@ function Counter({ updateVisible }: ICounterProps) {
   );
 }
 
-export function enhance(Comp: (props: any) => JSX.Element) {
-  return function(props: any) {
+export function enhance<TProps = {}>(Comp: (props: TProps & { updateVisible: () => void }) => JSX.Element) {
+  return function(props: Omit<TProps, "updateVisible">) {
     const [visible, setVisible] = useState(true);
-    return visible ? <Comp {...props} updateVisible={() => setVisible(false)} /> : null;
+    return visible ? <Comp {...(props as any)} updateVisible={() => setVisible(false)} /> : null;
   };
 }
 
 const B = enhance(Counter);
 
-render(<B />, document.body);
+render(<B v={"1"} />, document.body);
+// render(<Counter v={"1"} updateVisible={() => {}} />, document.body);
 ```
 
 
