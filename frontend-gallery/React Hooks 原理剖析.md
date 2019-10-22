@@ -100,23 +100,23 @@ increase(); // output: 2
 
 
 ```typescript
-interface IComponent {
-  memorizeState: any;
+interface ICurrentComponent {
+  memoizedState: any;
 }
 
-let component: IComponent = {
-  memorizeState: undefined,
+let currentComponent: ICurrentComponent = {
+  memoizedState: undefined,
 };
 
 function useState<T = any>(initialState?: T) {
-  component.memorizeState = component.memorizeState || initialState;
+  currentComponent.memoizedState = currentComponent.memoizedState || initialState;
 
   function setState(newState: T) {
-    component.memorizeState = newState;
+    currentComponent.memoizedState = newState;
     render(); // 重新渲染组件
   }
 
-  return [component.memorizeState, setState] as const;
+  return [currentComponent.memoizedState, setState] as const;
 }
 ```
 
@@ -142,9 +142,124 @@ function Counter() {
 
 
 
-我们发现，`count` 变化之后 `times` 也随之改变了，因为两个不同的 `setState` 修改了同一个值。但是，我们希望每次调用 `useState ` 得到的 state 都是独立的，并且每个 setState 也只修改其对应的 state。
+我们发现，`count` 变化之后 `times` 也随之改变了。因为两个不同的 `setState` 修改了同一个值。但是，我们希望每次调用 `useState ` 得到的 state 都是独立的，并且每个 setState 只修改其对应的 state。也就是说，每调用 `useState` 一次，我们就需要保存一组 `state` 和 `setState`。显然，`currentComponent` 的结构已经不能满足我们的需求，我们需要对它进行调整。
 
 
+
+我们可以用字典结构去存储每个 Hook 的状态。这种方式需要为每个 Hook 指定一个唯一的 key，不仅使用起来不方便，而且可能产生命名冲突的问题：
+
+
+
+```typescript
+interface IHookState {
+  memoizedState?: any;
+}
+
+interface ICurrentComponent {
+  hooks: {
+    [key: string]: IHookState;
+  };
+}
+
+let currentComponent: ICurrentComponent = {
+  hooks: {},
+};
+
+// 对应的使用方式
+const [count1, setCount1] = useState<number>(0, "count1"); 
+const [count2, setCount2] = useState<number>(2, "count1"); // 冲突！前面已经定义了一个 count1
+
+```
+
+
+
+我们也可以用数组来记录每个 Hook 的状态，然后通过索引去取值：
+
+
+
+```typescript
+interface IHookState {
+  memoizedState?: any;
+}
+
+interface ICurrentComponent {
+  hooks: IHookState[];
+}
+
+let currentComponent: ICurrentComponent = {
+  hooks: [],
+};
+```
+
+
+
+用这种结构来实现 `useState`，如下所示：
+
+
+
+```typescript
+let currentIdx = 0;
+let currentComponent = {
+  hooks: [],
+};
+
+function useState<T = any>(initialState: T) {
+  // 每调用一次 useState，索引 +1
+  const hookState = getHookState(currentIdx++);
+
+  function setState(nextState: T) {
+    if (hookState.memoizedState[0] !== nextState) {
+      hookState.memoizedState[0] = nextState;
+      render();
+    }
+  }
+
+  const state = hookState.memoizedState ? hookState.memoizedState[0] : initialState;
+  hookState.memoizedState = [state, setState];
+
+  return hookState.memoizedState;
+}
+
+// 根据索引获取对应 Hook 的 State
+function getHookState(idx: number) {
+  const hooks = currentComponent.hooks;
+
+  // 如果要获取的 Hook State 不存在，就为它赋一个初始值 {}
+  if (idx >= hooks.length) {
+    hooks.push({});
+  }
+
+  return hooks[idx];
+}
+```
+
+
+
+这样组件中每调用一次 `useState`，就会在 `currentComponent.hooks` 节点上保存一组 `state` 和 `setState`，保证了每个 state 的独立性。但是这种方式必须保证索引的一致性，否则我们无法通过索引取到正确的值。
+
+于是，也就不难理解 React Hooks 定义的规则：不能在循环、条件语句或者嵌套函数中使用 Hooks。因为这样可能导致首次 render 注册的 Hooks 和后续 render 时的 Hooks 不一致，无法通过索引获取到正确的值。举个例子：
+
+
+
+```typescript
+function Counter() {
+  const [count1, setCount1] = useState<number>(0);
+  const [count2, setCount2] = useState<number>(2);
+
+  if (count1 > 0) {
+    const [count3, setCount3] = useState<number>(2);
+    console.log(count3, setCount3);
+  }
+  
+  return <div onClick={() => setCount1(count1 + 1)}>{count1}</div>;
+}
+```
+
+
+
+让我们来看看上面这段代码会发生什么：
+
+1. 首次 render，初始化 useState
 
 
 
