@@ -31,7 +31,7 @@ function Counter() {
 
 从这个例子可以看出，`Counter` 组件中确实并没有保存 `count` 状态。那么，状态保存在什么地方？回答这个问题之前，我们不妨换个角度想想，哪些地方能够保存状态？全局变量、Class 实例、闭包、LocalStorage、IndexedDB、Cookie…… 这么多保存状态的地方，如何选择？
 
-首先排除 LocalStorage、IndexedDB 和 Cookie，因为它们会带来副作用以及兼容性问题。这样一来，就只剩下全局变量、Class 和闭包。接下来，让我们再仔细看看，它们分别是如何保存状态的。
+首先排除 LocalStorage、IndexedDB 和 Cookie，因为它们会带来副作用和兼容性问题。这样一来，就只剩下全局变量、Class 和闭包。接下来，让我们再仔细看看，它们分别是如何保存状态的。
 
 
 
@@ -91,7 +91,76 @@ increase(); // output: 2
 
 
 
-全局变量的问题不用多说，很多人都深有体会。Class 也会带来[诸多问题](https://reactjs.org/docs/hooks-intro.html#classes-confuse-both-people-and-machines)。最后可供选择的就只有闭包了。接下来，我们就用闭包的方式来实现 `useState`。
+全局变量的问题不用多说，很多人都深有体会。Class 也会带来[诸多问题](https://reactjs.org/docs/hooks-intro.html#classes-confuse-both-people-and-machines)。最后可供选择的就只有闭包了。在模块化开发中，利用闭包的特性，我们只需要在文件顶部声明一个用于挂载状态的变量即可。这样在文件内部的所有方法都可以访问这个变量，而且不会污染全局命名空间。
+
+
+
+我们可以定义一个 `component`  变量用于挂载状态，就像下面这样：
+
+
+
+```typescript
+interface IComponent {
+  memorizeState: any;
+}
+
+let component: IComponent = {
+  memorizeState: undefined,
+};
+
+function useState<T = any>(initialState?: T) {
+  component.memorizeState = component.memorizeState || initialState;
+
+  function setState(newState: T) {
+    component.memorizeState = newState;
+    render(); // 重新渲染组件
+  }
+
+  return [component.memorizeState, setState] as const;
+}
+```
+
+
+
+在上面的例子中，不管组件渲染多少次，状态都能够一直保存。接下来，让我们试试调用多次 `useState` ：
+
+
+
+ ```typescript
+function Counter() {
+  const [count, setCount] = useState<number>(0);
+  const [times, setTimes] = useState<number>(100);
+
+  return (
+    <div>
+      <div onClick={() => setCount(count + 1)}>{count}</div>
+      <div onClick={() => setTimes(times + 1)}>{times}</div>
+    </div>
+  );
+}
+ ```
+
+
+
+我们发现，`count` 变化之后 `times` 也随之改变了，因为两个不同的 `setState` 修改了同一个值。但是，我们希望每次调用 `useState ` 得到的 state 都是独立的，并且每个 setState 也只修改其对应的 state。
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------分割线--------------
+
+
+
+接下来，我们就用闭包的方式来实现 `useState`。
 
 
 
@@ -121,12 +190,6 @@ setCount(5);
 
 console.log(count); // output: 0
 ```
-
-
-
-
-
-
 
 
 
@@ -174,60 +237,6 @@ setCount(5);        // 修改状态，导致组件 re-render
 const [count1] = useState(0); // 第二次 render 时，再次执行 useState
 console.log(count1);          // 由于 count 的值已经被修改了，所以返回值是修改后的 5
 ```
-
-
-
-到目前为止，看起来不错。让我们试试调用多次 `useState` ：
-
-
-
-```typescript
-import ReactDOM from "react-dom";
-import React from "react";
-
-interface IComponent {
-  memorizeState: any;
-}
-
-let component: IComponent = {
-  memorizeState: undefined,
-};
-
-function useState<T = any>(initialState?: T) {
-  component.memorizeState = component.memorizeState || initialState;
-
-  function setState(newState?: T) {
-    component.memorizeState = newState;
-    render(); // 重新渲染组件
-  }
-
-  return [component.memorizeState, setState] as const;
-}
-
-function Counter() {
-  const [count, setCount] = useState<number>(0);
-  const [times, setTimes] = useState<number>(100);
-
-  return (
-    <div>
-      <div onClick={() => setCount(count + 1)}>{count}</div>
-      <div onClick={() => setTimes(times + 1)}>{times}</div>
-    </div>
-  );
-}
-
-function render() {
-  ReactDOM.render(<Counter />, document.body);
-}
-
-render();
-```
-
-
-
-两次 setState 修改到了同一个值。怎么办呢？
-
-
 
 
 
