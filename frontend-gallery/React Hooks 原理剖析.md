@@ -243,13 +243,13 @@ function getHookState(idx: number) {
 
 ```typescript
 function Counter() {
-  const [count1, setCount1] = useState<number>(0);
-  const [count2, setCount2] = useState<number>(2);
-
-  if (count1 > 0) {
+  if (count === 0) {
     const [count3, setCount3] = useState<number>(2);
     console.log(count3, setCount3);
   }
+  
+  const [count1, setCount1] = useState<number>(0);
+  const [count2, setCount2] = useState<number>(2);
   
   return <div onClick={() => setCount1(count1 + 1)}>{count1}</div>;
 }
@@ -262,6 +262,8 @@ function Counter() {
 1. 首次 render，初始化 useState
 
 
+
+每一次 render，React 会 比较 hooks 的 length、类型以及 deps， 如果 Hooks 定义的规则被破坏了，会抛出 warning。
 
 
 
