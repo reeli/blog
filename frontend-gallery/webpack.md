@@ -90,7 +90,7 @@ const fn2 = () => console.log("fn2"); // Dead Code
 
 ```typescript
 const setTitle = () => {
-  document.title = "111";
+  document.title = "Chengdu";
 };
 
 const a = setTitle();
@@ -98,13 +98,9 @@ const a = setTitle();
 
 
 
-在上面的例子中，虽然 `a` 变量没有被任何地方使用到，但是由于副作用，在为它赋值时会使 document 的 title 被设置为 111。如果把 `a` 变量删除，会导致 document 的 title 无法被正确设置。因此，删除有副作用的代码可能导致应用程序出现 bug 甚至 crash。
+在上面的例子中，虽然 `a` 变量没有被任何地方使用到，但是由于副作用，在为它赋值时会使 document 的 title 被设置为 Chengdu。如果把 `a` 变量删除，会导致 document 的 title 无法被正确设置。因此，删除有副作用的代码可能导致应用程序出现 bug 甚至 crash。
 
-那不在项目中写这种带副作用的代码就行了呗？当然，确实不应该在项目中写这种带副作用的代码。不过即便我们不写，在编译的过程中也可能会产生很多带副作用的代码。比如用 TypeScript 或者 Babel 将项目代码从 ES6 编译成 ES5。
-
-
-
-Terser -> Babel 的 scope？函数的 scope 内有哪些变量会被存储，分析 AST 时，如果 xxx(document) 没有在 scope 内，就可以判定为有副作用。
+那不在项目中写这种带副作用的代码就行了呗？当然，确实不应该在项目中写这种带副作用的代码。不过即便我们不写，在编译的过程中也可能会产生很多带副作用的代码。在实际项目中，我们经常会用 TypeScript 或者 Babel 将代码从 ES6 编译成 ES5。
 
 
 
@@ -116,7 +112,7 @@ Terser -> Babel 的 scope？函数的 scope 内有哪些变量会被存储，分
 
 
 
-
+Babel 转的 Class 是带 PURE 的。
 
 
 
@@ -162,6 +158,12 @@ const a = /*#__PURE__*/setTitle()
 // import * as React from 'react';
 ```
 
+
+
+Terser -> Babel 的 scope？函数的 scope 内有哪些变量会被存储，分析 AST 时，如果 xxx(document) 没有在 scope 内，就可以判定为有副作用。更聪明了？把其他代码删掉，只保留有副作用的代码？
+
+
+
 Loads -> lodash-es
 
 赋值语句都不要带副作用，带副作用的都不要赋值，比如 useEffect
@@ -170,9 +172,19 @@ Loads -> lodash-es
 
 
 
+通过 Bundle Analyze 分析引入的额外代码是否被删除
+
+PURE 只给函数调用(Call Expression)加，什么样的 Call Expression 呢？变量赋值、作为函数的参数、作为函数的 Return 等。
+
+
+
+画图展示 Tree Shaking 的过程。
+
+
+
 ## 参考
 
-[https://zh.wikipedia.org/wiki/%E5%87%BD%E6%95%B0%E5%89%AF%E4%BD%9C%E7%94%A8](https://zh.wikipedia.org/wiki/函数副作用)
+[函数副作用](https://zh.wikipedia.org/wiki/函数副作用)
 
 
 
