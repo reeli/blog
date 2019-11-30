@@ -3,8 +3,6 @@
 
 Tree Shaking 已经出现很久了，想必大家或多或少都听说过它。这项技术可以帮助我们删除项目中未被引用的代码，从而减少打包出来的代码量。我也在项目上用了很长时间，希望通过这篇文章跟大家分享我踩过的坑，并从原理和实践两个方面，对这项技术做一个系统的整理。
 
-文章中使用的 Webpack 版本是 4.35.x。
-
 
 
 ## 为什么需要 Tree  Shaking？
@@ -13,7 +11,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 有的人可能会说，我把没用到的模块删了不就好了，为什么还需要 Tree Shaking？且不说三方依赖库中也会有很多没有用到的模块，那些随着项目迭代而不再需要的方法，真的还会有人记得去删除吗？
 
-有的人又说了，我们可以使用 UglifyJS 这样的工具来做死代码消除（Dead Code Elimination）。那些对应用程序不会造成任何影响或者不可达的代码会被删除，就像下面这样：
+有的人又说了，我们可以使用 Uglify 或 Terser 这样的工具来做死代码消除（Dead Code Elimination）。那些对应用程序不会造成任何影响或者不可达的代码会被删除，就像下面这样：
 
 
 
@@ -21,7 +19,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 
 
-既然 UglifyJS 可以消除死代码，为什么还需要 Tree Shaking？原因是 UglifyJS 目前不能跨文件去做死代码消除。UglifyJS 会对文件的代码进行静态分析，然后将死代码从抽象语法树（AST）中删除。静态分析是指不运行代码，只从字面量上对代码进行分析。因此在静态分析时，require 函数不会被运行，无法得知文件 require 或 export 了哪些模块。另外，UglifyJS 只会对单个文件的 AST 进行分析，无法得知 export 的模块是否会被其他文件使用。
+既然 Uglify 可以消除死代码，为什么还需要 Tree Shaking？原因是 Uglify 目前不能跨文件去做死代码消除。Uglify 会对文件的代码进行静态分析，然后将死代码从抽象语法树（AST）中删除。静态分析是指不运行代码，只从字面量上对代码进行分析。因此在静态分析时，require 函数不会被运行，无法得知文件 require 或 export 了哪些模块。另外，Uglify 只会对单个文件的 AST 进行分析，无法得知 export 的模块是否会被其他文件使用。
 
 
 
@@ -43,7 +41,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 ## Tree Shaking 的原理是什么？
 
-简单来说，Tree Shaking 的原理就是对你 import 的代码进行静态分析，如果发现没有被用到的部分就不再 export。没有 export 的代码就会被 UglifyJS 当成死代码删除。需要注意的是，Webpack 的 Tree Shaking 不会直接把没有用到的代码删除，真正删除代码的是 UglifyJS 这样的死代码消除工具。
+简单来说，Tree Shaking 的原理就是对你 import 的代码进行静态分析，如果发现没有被用到的部分就不再 export。没有 export 的代码就会被 Uglify 当成死代码删除。需要注意的是，Webpack 的 Tree Shaking 不会直接把没有用到的代码删除，真正删除代码的是 Uglify 或 Terser 这样的死代码消除工具。
 
 
 
@@ -55,7 +53,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 
 
-```typescript
+```javascript
 // 伪代码
 export const fn1 = () => console.log("fn1");
 const fn2 = () => console.log("fn2"); // Dead Code
@@ -74,9 +72,9 @@ const fn2 = () => console.log("fn2"); // Dead Code
 
 
 
-## Tree Shaking 为什么失效了？
+## Tree Shaking 失效了吗？
 
-本以为有了 Tree Shaking 之后，再也不用担心引入多余模块的问题了。可是在实际场景中，当我使用 Webpack 的 Tree Shaking 时，却发现许多未使用的模块并没有被删除。原因是你的代码有「副作用」，或者 Uglify/Terser 无法判断你的代码是否有「副作用」。
+本以为有了 Tree Shaking 之后，再也不用担心引入多余模块的问题了。可是在实际场景中，当我使用 Webpack 打包时，却发现许多未使用的模块并没有被删除。难道 Tree Shaking 失效了吗？当然不是，前面已经说过，Tree Shaking 的工作只是不再 export 没有用到的模块，至于这个模块会不会被删除，是由 Uglify 或 Terser 这样的死代码消除工具决定的。如果你的代码有「副作用」，或者 Uglify 无法判断你的代码是否有「副作用」，那么就不会删除你的代码。
 
 
 
@@ -88,7 +86,7 @@ const fn2 = () => console.log("fn2"); // Dead Code
 
 
 
-```typescript
+```javascript
 const setTitle = () => {
   document.title = "Chengdu";
 };
@@ -98,17 +96,68 @@ const a = setTitle();
 
 
 
-在上面的例子中，虽然 `a` 变量没有被任何地方使用到，但是由于副作用，在为它赋值时会使 document 的 title 被设置为 Chengdu。如果把 `a` 变量删除，会导致 document 的 title 无法被正确设置。因此，删除有副作用的代码可能导致应用程序出现 bug 甚至 crash。
+在上面的例子中，虽然 `a` 变量没有被任何地方使用到，但是由于副作用，在为它赋值时会使 document 的 title 被设置为 「Chengdu」。如果把 `a` 变量删除，会导致 document 的 title 无法被正确设置。因此，删除有副作用的代码可能导致应用程序出现 bug 甚至 crash。
 
-那不在项目中写这种带副作用的代码就行了呗？当然，确实不应该在项目中写这种带副作用的代码。不过即便我们不写，在编译的过程中也可能会产生很多带副作用的代码。在实际项目中，我们经常会用 TypeScript 或者 Babel 将代码从 ES6 编译成 ES5。
-
-
+有的人可能会说，那不在项目中写这种带副作用的代码就行了呗？当然，确实不应该在项目中写这种带副作用的代码。不过即便我们不写，在打包的过程中也有可能产生带副作用的代码，比如用 TypeScript 或者 Babel 将代码从 ES6 编译成 ES5。举个例子，我们定义了一个简单的类，如下所示：
 
 
 
+```typescript
+class Greet {
+  greeting() {
+    return "hello";
+  }
+}
+```
 
 
-[Babel 例子](https://babeljs.io/repl#?babili=false&browsers=&build=&builtIns=false&spec=false&loose=false&code_lz=KYDwDg9gTgLgBAYwgOwM7wGbIIxwLxwAUAlPgHyIqoQA2wAdDRAOaEBEW2bxA3AFB9QkWJTTwEUYAEMYwAHJSAtsADCkmdHxFkS4AC446KAEtkzUnjJ84RCxUIBvazcMBXBAmCpUBgAYASBx1lAF8AfVR3T29fABpnGwwpYxo_QODgcKSUuOcQ3gEhaHEqcXVZBWUtCWkK3TVa6HYAFRQAT24eIA&debug=false&forceAllTransforms=false&shippedProposals=false&circleciRepo=&evaluate=false&fileSize=false&timeTravel=false&sourceType=module&lineWrap=true&presets=es2016%2Ces2017%2Ctypescript%2Cenv&prettier=false&targets=&version=7.7.4&externalPlugins=)
+
+但是在 Class 出现之前，我们是通过 ES5 的构造函数来生成实例对象的：
+
+
+
+```javascript
+function Greet() {
+}
+
+Greet.prototype.greeting = function () {
+  return "hello";
+};
+```
+
+
+
+在打包时，为了适配低版本浏览器，我们通常会把 ES6 编译成 ES5。但是在编译时，需要符合 ES6 的语义。就拿 Class 来说，你可以把它看成是 ES5 构造函数的一个语法糖。可是它却比普通的构造函数多了许多限制，例如必须使用 new 关键字来调用、类内部的方法不可枚举等等。因此在使用 Babel 编译示例代码时，为了符合 ES6 的语义，编译出来的代码是这样的：
+
+
+
+![image-20191130150824414](webpack.assets/image-20191130150824414.png)
+
+
+
+[Babel 传送门]([代码](https://babeljs.io/repl#?babili=false&browsers=&build=&builtIns=false&spec=false&loose=false&code_lz=MYGwhgzhAEDiBOBTRAXaBvAUNaBzJqAlgHa4AUAlBtjtEigK7zHQBEAFoiCAPasDcNAL6YhQA&debug=false&forceAllTransforms=false&shippedProposals=false&circleciRepo=&evaluate=false&fileSize=false&timeTravel=false&sourceType=module&lineWrap=true&presets=es2016%2Ces2017%2Ctypescript%2Cenv&prettier=false&targets=&version=7.7.4&externalPlugins=))
+
+
+
+可以看出，`_defineProperties` 通过调用 `Object.defineProperty` 方法修改了传入的参数 `target`，因此这个函数是有副作用的。前面也提到过，如果你的代码有副作用，Terser 就不会把它删掉。那是不是所有 Class 都不能被删除了？别慌，我们先把 Babel 编译好的代码分别放到 Rollup 和 Terser 上试一下。什么？居然都被删除了？
+
+
+
+[Rollup 传送门](https://rollupjs.org/repl/?version=1.27.5&shareable=JTdCJTIybW9kdWxlcyUyMiUzQSU1QiU3QiUyMm5hbWUlMjIlM0ElMjJtYWluLmpzJTIyJTJDJTIyY29kZSUyMiUzQSUyMigoKSUyMCUzRCUzRSUyMCU3QiU1Q24lMjAlMjBmdW5jdGlvbiUyMF9jbGFzc0NhbGxDaGVjayhpbnN0YW5jZSUyQyUyMENvbnN0cnVjdG9yKSUyMCU3QiU1Q24lMjAlMjAlMjAlMjBpZiUyMCghKGluc3RhbmNlJTIwaW5zdGFuY2VvZiUyMENvbnN0cnVjdG9yKSklMjAlN0IlNUNuJTIwJTIwJTIwJTIwJTIwJTIwdGhyb3clMjBuZXclMjBUeXBlRXJyb3IoJTVDJTIyQ2Fubm90JTIwY2FsbCUyMGElMjBjbGFzcyUyMGFzJTIwYSUyMGZ1bmN0aW9uJTVDJTIyKSUzQiU1Q24lMjAlMjAlMjAlMjAlN0QlNUNuJTIwJTIwJTdEJTVDbiU1Q24lMjAlMjBmdW5jdGlvbiUyMF9kZWZpbmVQcm9wZXJ0aWVzKHRhcmdldCUyQyUyMHByb3BzKSUyMCU3QiU1Q24lMjAlMjAlMjAlMjBmb3IlMjAodmFyJTIwaSUyMCUzRCUyMDAlM0IlMjBpJTIwJTNDJTIwcHJvcHMubGVuZ3RoJTNCJTIwaSUyQiUyQiklMjAlN0IlNUNuJTIwJTIwJTIwJTIwJTIwJTIwdmFyJTIwZGVzY3JpcHRvciUyMCUzRCUyMHByb3BzJTVCaSU1RCUzQiU1Q24lMjAlMjAlMjAlMjAlMjAlMjBkZXNjcmlwdG9yLmVudW1lcmFibGUlMjAlM0QlMjBkZXNjcmlwdG9yLmVudW1lcmFibGUlMjAlN0MlN0MlMjBmYWxzZSUzQiU1Q24lMjAlMjAlMjAlMjAlMjAlMjBkZXNjcmlwdG9yLmNvbmZpZ3VyYWJsZSUyMCUzRCUyMHRydWUlM0IlNUNuJTIwJTIwJTIwJTIwJTIwJTIwaWYlMjAoJTVDJTIydmFsdWUlNUMlMjIlMjBpbiUyMGRlc2NyaXB0b3IpJTIwJTdCJTVDbiUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMGRlc2NyaXB0b3Iud3JpdGFibGUlMjAlM0QlMjB0cnVlJTNCJTVDbiUyMCUyMCUyMCUyMCUyMCUyMCU3RCU1Q24lMjAlMjAlMjAlMjAlMjAlMjBPYmplY3QuZGVmaW5lUHJvcGVydHkodGFyZ2V0JTJDJTIwZGVzY3JpcHRvci5rZXklMkMlMjBkZXNjcmlwdG9yKSUzQiU1Q24lMjAlMjAlMjAlMjAlN0QlNUNuJTIwJTIwJTdEJTVDbiU1Q24lMjAlMjBmdW5jdGlvbiUyMF9jcmVhdGVDbGFzcyhDb25zdHJ1Y3RvciUyQyUyMHByb3RvUHJvcHMlMkMlMjBzdGF0aWNQcm9wcyklMjAlN0IlNUNuJTIwJTIwJTIwJTIwaWYlMjAocHJvdG9Qcm9wcyklMjAlN0IlNUNuJTIwJTIwJTIwJTIwJTIwJTIwX2RlZmluZVByb3BlcnRpZXMoQ29uc3RydWN0b3IucHJvdG90eXBlJTJDJTIwcHJvdG9Qcm9wcyklM0IlNUNuJTIwJTIwJTIwJTIwJTdEJTVDbiUyMCUyMCUyMCUyMGlmJTIwKHN0YXRpY1Byb3BzKSUyMCU3QiU1Q24lMjAlMjAlMjAlMjAlMjAlMjBfZGVmaW5lUHJvcGVydGllcyhDb25zdHJ1Y3RvciUyQyUyMHN0YXRpY1Byb3BzKSUzQiU1Q24lMjAlMjAlMjAlMjAlN0QlNUNuJTIwJTIwJTIwJTIwcmV0dXJuJTIwQ29uc3RydWN0b3IlM0IlNUNuJTIwJTIwJTdEJTVDbiU1Q24lMjAlMjB2YXIlMjBHcmVldCUyMCUzRCU1Q24lMjAlMjAlMjAlMjAlMjAlMjAlMkYqJTIzX19QVVJFX18qJTJGJTVDbiUyMCUyMCUyMCUyMCUyMCUyMGZ1bmN0aW9uJTIwKCklMjAlN0IlNUNuJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwZnVuY3Rpb24lMjBHcmVldCgpJTIwJTdCJTVDbiUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMF9jbGFzc0NhbGxDaGVjayh0aGlzJTJDJTIwR3JlZXQpJTNCJTVDbiUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCU3RCU1Q24lNUNuJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwX2NyZWF0ZUNsYXNzKEdyZWV0JTJDJTIwJTVCJTdCJTVDbiUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMGtleSUzQSUyMCU1QyUyMmdyZWV0aW5nJTVDJTIyJTJDJTVDbiUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMHZhbHVlJTNBJTIwZnVuY3Rpb24lMjBncmVldGluZygpJTIwJTdCJTVDbiUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMHJldHVybiUyMCU1QyUyMmhlbGxvJTVDJTIyJTNCJTVDbiUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCUyMCU3RCU1Q24lMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjAlN0QlNUQpJTNCJTVDbiU1Q24lMjAlMjAlMjAlMjAlMjAlMjAlMjAlMjByZXR1cm4lMjBHcmVldCUzQiU1Q24lMjAlMjAlMjAlMjAlMjAlMjAlN0QoKSUzQiU1Q24lN0QpKCklNUNuJTVDbiUyMiUyQyUyMmlzRW50cnklMjIlM0F0cnVlJTdEJTVEJTJDJTIyb3B0aW9ucyUyMiUzQSU3QiUyMmZvcm1hdCUyMiUzQSUyMmNqcyUyMiUyQyUyMm5hbWUlMjIlM0ElMjJteUJ1bmRsZSUyMiUyQyUyMmFtZCUyMiUzQSU3QiUyMmlkJTIyJTNBJTIyJTIyJTdEJTJDJTIyZ2xvYmFscyUyMiUzQSU3QiU3RCU3RCUyQyUyMmV4YW1wbGUlMjIlM0FudWxsJTdE)
+
+[Terser 传送门](https://try.terser.org/)
+
+
+
+
+
+
+
+## 参考
+
+[函数副作用](https://zh.wikipedia.org/wiki/函数副作用)
+
+
 
 
 
@@ -182,9 +231,45 @@ PURE 只给函数调用(Call Expression)加，什么样的 Call Expression 呢�
 
 
 
-## 参考
 
-[函数副作用](https://zh.wikipedia.org/wiki/函数副作用)
+
+如果不严格遵照 ES6 的语义进行编译呢？Babel 也提供了这样的方式，叫「宽松模式」，编译结果如下：
+
+
+
+![image-20191130154710190](webpack.assets/image-20191130154710190.png)
+
+
+
+[Bebel 编译示例代码宽松模式](https://babeljs.io/repl#?babili=false&browsers=&build=&builtIns=false&spec=false&loose=true&code_lz=MYGwhgzhAEDiBOBTRAXaBvAUNaBzJqAlgHa4AUAlBtjtEigK7zHQBEAFoiCAPasDcNAL6YhQA&debug=false&forceAllTransforms=false&shippedProposals=false&circleciRepo=&evaluate=false&fileSize=false&timeTravel=false&sourceType=module&lineWrap=true&presets=es2016%2Ces2017%2Ctypescript%2Cenv&prettier=false&targets=&version=7.7.4&externalPlugins=)
+
+
+
+太棒了！这样编译出来的 Class 确实没有副作用了。
+
+
+
+```javascript
+(() => {
+  var Greet =
+      function () {
+        function Greet() {
+        }
+
+        var _proto = Greet.prototype;
+
+        _proto.greeting = function greeting() {
+          return "hello";
+        };
+
+        return Greet;
+      }();
+})()
+```
+
+
+
+
 
 
 
@@ -197,6 +282,20 @@ PURE 只给函数调用(Call Expression)加，什么样的 Call Expression 呢�
 3、将各个引用模块打包为一个立即执行函数
 
 4、将最终的 bundle 文件写入 bundle.js 中
+
+
+
+注释加给函数调用
+
+
+
+
+
+文章中使用的版本：
+
+Webpack: 4.35.x
+
+Babel: 7.7.4
 
 
 
