@@ -74,6 +74,16 @@ const fn2 = () => console.log("fn2"); // Dead Code
 
 ## 如何使用 Tree Shaking？
 
+就拿 Webpack 的 Tree Shaking 来说吧。你需要注意下面几点：
+
+
+
+1. 将 mode 选项设置为 production，以启用 tree shaking 和 minification (代码压缩) 。
+2. 使用 ES6 模块语法（即 `import` 和 `export`）。
+3. 确保没有 compiler 将 ES6 模块语法转换为 CommonJS 模块。这一点很重要，在你使用 babel-loader 或者 ts-loader 编译代码时，一定要保留 import 和 export，否则 Tree Shaking 无法生效。
+
+
+
 在没有 Tree Shaking 之前，为了避免把三方库的所有代码都打包到 Bundle 文件中，我们只能采用「按需引用」的方式。就拿 lodash 来说吧，我们会将 lodash 的每个方法打包成一个单独的文件，在使用的地方「按需引用」。比如：
 
 
@@ -240,14 +250,6 @@ const subscription = sub$.subscribe(() => {
 
 
 
-## 总结
-
-1. 使用 ES2015 模块语法（即 `import` 和 `export`）
-2. 确保没有 compiler 将 ES2015 模块语法转换为 CommonJS 模块
-3. 通过将 mode 选项设置为 production，启用 minification(代码压缩) 和 tree shaking
-
-
-
 ## 工具版本
 
 文章中用到的工具版本：
@@ -264,7 +266,9 @@ Rollup: v1.27.5
 
 ## 参考
 
-[函数副作用](https://zh.wikipedia.org/wiki/函数副作用)
+1. [函数副作用](https://zh.wikipedia.org/wiki/函数副作用)
+
+2. https://juejin.im/post/5a5652d8f265da3e497ff3de
 
 
 
@@ -274,11 +278,25 @@ Rollup: v1.27.5
 
 
 
-先 Tree Shaking、Uglify 之后，再编译代码？Uglify 不支持 ES5，只能需要使用 Terser。
+为了避免编译带来的副作用，能够先 Tree Shaking、Uglify 之后，再编译代码？如何实现？
+
+Uglify 不支持 ES6 Module，只能使用 Terser。
 
 通过 Bundle Analyze 分析引入的额外代码是否被删除
 
+Terser -> Babel 的 scope？函数的 scope 内有哪些变量会被存储，分析 AST 时，如果 xxx(document) 没有在 scope 内，就可以判定为有副作用。更聪明了？把其他代码删掉，只保留有副作用的代码？
 
+赋值语句都不要带副作用，带副作用的都不要赋值，比如 useEffect
+
+注册给 export 等同于使用了它。
+
+PURE 只给函数调用(Call Expression)加，什么样的 Call Expression 呢？变量赋值、作为函数的参数、作为函数的 Return 等。
+
+画图展示 Tree Shaking 的过程。
+
+document.title 取值也可能产生副作用？因为 getter, setter 是不透明的。
+
+标记 sideEffect
 
 
 
@@ -321,39 +339,8 @@ const a = /*#__PURE__*/setTitle()
 
 // import {map} from 'lodash'; //lodash-es
 // import map form 'lodash/map';
-// import * as React from 'react';
+// import * as React from 'react'; 也能被删除
 ```
-
-
-
-
-
-1. 在代码编译的过程中可能会产生有副作用的代码。
-2. TypeScript、Babel 这样的编译工具。
-
-
-
-Terser -> Babel 的 scope？函数的 scope 内有哪些变量会被存储，分析 AST 时，如果 xxx(document) 没有在 scope 内，就可以判定为有副作用。更聪明了？把其他代码删掉，只保留有副作用的代码？
-
-
-
-Loads -> lodash-es
-
-赋值语句都不要带副作用，带副作用的都不要赋值，比如 useEffect
-
-注册给 export 等同于使用了它。
-
-
-
-通过 Bundle Analyze 分析引入的额外代码是否被删除
-
-PURE 只给函数调用(Call Expression)加，什么样的 Call Expression 呢？变量赋值、作为函数的参数、作为函数的 Return 等。
-
-
-
-画图展示 Tree Shaking 的过程。
-
-
 
 
 
@@ -409,17 +396,9 @@ PURE 只给函数调用(Call Expression)加，什么样的 Call Expression 呢�
 
 
 
-注释加给函数调用
 
 
 
-
-
-
-
-
-
-document.title 取值也会产生副作用？因为 getter, setter 是不透明的？
 
 Pollyfill/ call/bind/apply
 
@@ -427,37 +406,17 @@ Pollyfill/ call/bind/apply
 
 如何知道三方库是否使用 ES6 还是 ES5？
 
-Babel: ES6 模块转换成 ES5。
-
-Uglify 和 Terser: Uglify 不支持 ES6 module。
-
-
-
 Webpack 升级之后可以 import * as xxx?
 
-只有在 production 模式下才会生效?
-
 UglifyJS 不会跨文件去做 DCE，如果有 Scope Hoisting 还需要 Tree Shaking 吗？
-
-UglifyJS 为什么不能跨文件去做 DCE？
-
-标记 sideEffect
-
-标记 PURE
-
-tree shaking 并不删除死代码，只是标记
 
 Roll up 和 Webpack 对比
 
 // harmony export 是什么？
 
-// import * as xxx 
-
 // import React from 'react' 会导入所有模块吗？
 
 // const abc = require("abc"); 会导入所有模块吗？
-
-// webpack 是如何识别 unused xxx 标记的？
 
 - node_modules 里面的代码
 - 非 node_modules 的代码
