@@ -15,7 +15,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 
 
-![Screen Shot 2019-11-21 at 1.32.45 PM](webpack.assets/Screen Shot 2019-11-21 at 1.32.45 PM.png)
+![Screen Shot 2019-11-21 at 1.32.45 PM](webpack.assets/1.png)
 
 
 
@@ -23,7 +23,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 
 
-![Screen Shot 2019-11-21 at 2.27.51 PM](webpack.assets/Screen Shot 2019-11-21 at 2.27.51 PM.png)
+![Screen Shot 2019-11-21 at 2.27.51 PM](webpack.assets/2.png)
 
 
 
@@ -31,7 +31,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 
 
-![Screen Shot 2019-11-21 at 1.36.31 PM](webpack.assets/Screen Shot 2019-11-21 at 1.36.31 PM.png)
+![Screen Shot 2019-11-21 at 1.36.31 PM](webpack.assets/3.png)
 
 
 
@@ -45,7 +45,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 
 
-![Screen Shot 2019-11-21 at 12.58.16 PM](webpack.assets/Screen Shot 2019-11-21 at 12.58.16 PM-4407909.png)
+![Screen Shot 2019-11-21 at 12.58.16 PM](webpack.assets/4.png)
 
 
 
@@ -209,7 +209,7 @@ var Greet = /** @class */ (function () {
 
 
 
-![image-20191130150824414](webpack.assets/image-20191130150824414.png)
+![image-20191130150824414](webpack.assets/5.png)
 
 
 
