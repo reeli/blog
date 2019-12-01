@@ -84,6 +84,8 @@ const fn2 = () => console.log("fn2"); // Dead Code
 
 
 
+### 如何处理三方库？
+
 在没有 Tree Shaking 之前，为了避免把三方库的所有代码都打包到 Bundle 文件中，我们只能采用「按需引用」的方式。就拿 lodash 来说吧，我们会将 lodash 的每个方法打包成一个单独的文件，在使用的地方「按需引用」。比如：
 
 
@@ -95,17 +97,17 @@ import get from "lodash/get";
 
 
 
-有了 Tree Shaking 之后，我们只需要保证引入的三方库是以 ES Module 导出的即可。对于不是 ES6 Module 导出的三方库，我们可以编译时使用它对应的 ES Module 的版本。比如用 `lodash-es` 替换 `lodash`:
+有了 Tree Shaking 之后，我们只需要保证引入的三方库是以 ES Module 导出的即可。对于不是 ES6 Module 导出的三方库，可以在编译时使用它对应的 ES Module 的版本。比如用 `lodash-es` 替换 `lodash`:
 
 
 
 ```json
 {
-  resolve: {
-    alias: {
-      lodash: "lodash-es",
-    },
-  },
+  "resolve": {
+    "alias": {
+      "lodash": "lodash-es"
+    }
+  }
 }
 ```
 
