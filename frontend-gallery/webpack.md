@@ -11,7 +11,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 有的人可能会说，我把没用到的模块删了不就好了，为什么还需要 Tree Shaking？且不说三方依赖库中也会有很多没有用到的模块，那些随着项目迭代而不再需要的方法，真的还会有人记得去删除吗？
 
-有的人又说了，我们可以使用 Uglify 或 Terser 这样的工具来做死代码消除（Dead Code Elimination）。那些对应用程序不会造成任何影响或者不可达的代码会被删除，就像下面这样：
+有的人又说了，我们可以使用 Uglify 或 Terser 这样的 JS 压缩工具来做死代码消除（Dead Code Elimination）。那些对应用程序不会造成任何影响或者不可达的代码会被删除，就像下面这样：
 
 
 
@@ -41,7 +41,7 @@ Tree  Shaking 的字面意思是「摇树」，就是将项目中一些没有用
 
 ## Tree Shaking 的原理是什么？
 
-简单来说，Tree Shaking 的原理就是对你 import 的代码进行静态分析，如果发现没有被用到的部分就不再 export。没有 export 的代码就会被 Uglify 当成死代码删除。需要注意的是，Webpack 的 Tree Shaking 不会直接把没有用到的代码删除，真正删除代码的是 Uglify 或 Terser 这样的死代码消除工具。
+简单来说，Tree Shaking 的原理就是对你 import 的代码进行静态分析，如果发现没有被用到的部分就不再 export。没有 export 的代码就会被 Uglify 当成死代码删除。需要注意的是，Webpack 的 Tree Shaking 不会直接把没有用到的代码删除，真正删除代码的是 Uglify 或 Terser 这样的 JS 压缩工具。
 
 
 
@@ -72,9 +72,38 @@ const fn2 = () => console.log("fn2"); // Dead Code
 
 
 
+## 如何使用 Tree Shaking？
+
+在没有 Tree Shaking 之前，为了避免把三方库的所有代码都打包到 Bundle 文件中，我们只能采用「按需引用」的方式。就拿 lodash 来说吧，我们会将 lodash 的每个方法打包成一个单独的文件，在使用的地方「按需引用」。比如：
+
+
+
+```javascript
+import map from "lodash/map";
+import get from "lodash/get";
+```
+
+
+
+有了 Tree Shaking 之后，我们只需要保证引入的三方库是以 ES Module 导出的即可。对于不是 ES6 Module 导出的三方库，我们可以编译时使用它对应的 ES Module 的版本。比如用 `lodash-es` 替换 `lodash`:
+
+
+
+```json
+{
+  resolve: {
+    alias: {
+      lodash: "lodash-es",
+    },
+  },
+}
+```
+
+
+
 ## Tree Shaking 失效了吗？
 
-本以为有了 Tree Shaking 之后，再也不用担心引入多余模块的问题了。可是在实际场景中，当我使用 Webpack 打包时，却发现许多未使用的模块并没有被删除。难道 Tree Shaking 失效了吗？当然不是，前面已经说过，Tree Shaking 的工作只是不再 export 没有用到的模块，至于这个模块会不会被删除，是由 Uglify 或 Terser 这样的死代码消除工具决定的。如果你的代码有「副作用」，或者 Uglify 无法判断你的代码是否有「副作用」，那么就不会删除你的代码。
+本以为有了 Tree Shaking 之后，再也不用担心引入多余模块的问题了。可是在实际场景中，当我使用 Webpack 打包时，却发现许多未使用的模块并没有被删除。难道 Tree Shaking 失效了吗？当然不是，前面已经说过，Tree Shaking 的工作只是不再 export 没有用到的模块，至于这个模块会不会被删除，是由 Uglify 或 Terser 这样的 JS  压缩工具决定的。如果你的代码有「副作用」，或者 Uglify 无法判断你的代码是否有「副作用」，那么就不会删除你的代码。
 
 
 
@@ -98,7 +127,11 @@ const a = setTitle();
 
 在上面的例子中，虽然 `a` 变量没有被任何地方使用到，但是由于副作用，在为它赋值时会使 document 的 title 被设置为 「Chengdu」。如果把 `a` 变量删除，会导致 document 的 title 无法被正确设置。因此，删除有副作用的代码可能导致应用程序出现 bug 甚至 crash。
 
-有的人可能会说，那不在项目中写这种带副作用的代码就行了呗？当然，确实不应该在项目中写这种带副作用的代码。不过即便我们不写，在打包的过程中也有可能产生带副作用的代码，比如用 TypeScript 或者 Babel 将代码从 ES6 编译成 ES5。举个例子，我们定义了一个简单的类，如下所示：
+有的人可能会说，那不在项目中写这种带副作用的代码就行了呗？当然，确实不应该在项目中写这种带副作用的代码。不过即便我们不写，也有可能产生带副作用的代码，比如将代码从 ES6 编译成 ES5。
+
+
+
+我们定义了一个简单的类，如下所示：
 
 
 
@@ -112,7 +145,7 @@ class Greet {
 
 
 
-但是在 Class 出现之前，我们是通过 ES5 的构造函数来生成实例对象的：
+在打包时，为了适配低版本浏览器，我们通常会把 ES6 代码编译成 ES5。在 Class 出现之前，我们是通过 ES5 的构造函数来生成实例对象的，就像下面这样：
 
 
 
@@ -127,7 +160,40 @@ Greet.prototype.greeting = function () {
 
 
 
-在打包时，为了适配低版本浏览器，我们通常会把 ES6 编译成 ES5。但是在编译时，需要符合 ES6 的语义。就拿 Class 来说，你可以把它看成是 ES5 构造函数的一个语法糖。可是它却比普通的构造函数多了许多限制，例如必须使用 new 关键字来调用、类内部的方法不可枚举等等。因此在使用 Babel 编译示例代码时，为了符合 ES6 的语义，编译出来的代码是这样的：
+那实际结果是不是跟我们想的一样呢？我先用 TypeScript 编译了一下，结果如下：
+
+
+
+```javascript
+var Greet = /** @class */ (function () {
+    function Greet() {
+    }
+    Greet.prototype.greeting = function () {
+        return "hello";
+    };
+    return Greet;
+}());
+```
+
+
+
+跟我们猜想的差不多，不过 `Greet` 类被封装成了一个立即执行函数。这段代码看起来没有任何副作用，应该能够被删除吧？于是我赶紧用 Rollup 和 Terser 试了一下，结果却不尽如人意。这段代码在 Rollup 被删除了，但是在 Terser 却没有被删除。
+
+
+
+[Rollup 传送门](https://rollupjs.org/repl/?version=1.27.5&shareable=JTdCJTIybW9kdWxlcyUyMiUzQSU1QiU3QiUyMm5hbWUlMjIlM0ElMjJtYWluLmpzJTIyJTJDJTIyY29kZSUyMiUzQSUyMnZhciUyMEdyZWV0JTIwJTNEJTIwJTJGKiolMjAlNDBjbGFzcyUyMColMkYlMjAoZnVuY3Rpb24lMjAoKSUyMCU3QiU1Q24lMjAlMjAlMjAlMjBmdW5jdGlvbiUyMEdyZWV0KCklMjAlN0IlNUNuJTIwJTIwJTIwJTIwJTdEJTVDbiUyMCUyMCUyMCUyMEdyZWV0LnByb3RvdHlwZS5ncmVldGluZyUyMCUzRCUyMGZ1bmN0aW9uJTIwKCklMjAlN0IlNUNuJTIwJTIwJTIwJTIwJTIwJTIwJTIwJTIwcmV0dXJuJTIwJTVDJTIyaGVsbG8lNUMlMjIlM0IlNUNuJTIwJTIwJTIwJTIwJTdEJTNCJTVDbiUyMCUyMCUyMCUyMHJldHVybiUyMEdyZWV0JTNCJTVDbiU3RCgpKSUzQiUyMiUyQyUyMmlzRW50cnklMjIlM0F0cnVlJTdEJTVEJTJDJTIyb3B0aW9ucyUyMiUzQSU3QiUyMmZvcm1hdCUyMiUzQSUyMmNqcyUyMiUyQyUyMm5hbWUlMjIlM0ElMjJteUJ1bmRsZSUyMiUyQyUyMmFtZCUyMiUzQSU3QiUyMmlkJTIyJTNBJTIyJTIyJTdEJTJDJTIyZ2xvYmFscyUyMiUzQSU3QiU3RCU3RCUyQyUyMmV4YW1wbGUlMjIlM0FudWxsJTdE)
+
+[Terser 传送门](https://try.terser.org/)
+
+
+
+为什么呢？明明我的代码没有副作用，为啥 Terser 删不了？为了弄清楚原因，我逐行 debug，看看究竟是哪一行影响了 Terser 的判断。当我把 `return Greet` 删除后，Terser 居然就能够正确删除了，这让我变得更加疑惑。
+
+`return Greet` 之后，就相当于给 `Greet ` 变量赋了一个值。这个值可能会在其他地方被修改。但是由于 Terser 没有完善的程序流分析，它只能简单的判断变量后续是否被引用、修改，无法判断变量完整的修改过程。因此 Terser 不知道上面这段代码是否会产生副作用，当它无法判断时，只能选择不删除。而 Rollup 有相对完善的程序流分析，因此可以更好地判断代码是否有副作用。那在项目中没有用 Rollup 而是用了 Terser 该怎么办呢？请接着往下看。
+
+
+
+接下来，我又拿 Babel 编译试了一下，结果如下：
 
 
 
@@ -139,7 +205,9 @@ Greet.prototype.greeting = function () {
 
 
 
-可以看出，`_defineProperties` 通过调用 `Object.defineProperty` 方法修改了传入的参数 `target`，因此这个函数是有副作用的。前面也提到过，如果你的代码有副作用，Terser 就不会把它删掉。那是不是所有 Class 都不能被删除了？别慌，我们先把 Babel 编译好的代码分别放到 Rollup 和 Terser 上试一下。什么？居然都被删除了？
+可以看到，Babel 编译出来的代码跟之前差距很大。因为在 Babel 严格模式下，会遵循 ES6 的语义去编译代码。就拿 Class 来说，你可以把它看成是 ES5 构造函数的一个语法糖。可是它却比普通的构造函数多了许多限制，例如必须使用 new 关键字来调用、类内部的方法不可枚举等等。
+
+在生成的代码中，`_defineProperties` 通过调用 `Object.defineProperty` 方法修改了传入的参数 `target`，这样就产生了副作用。前面也提到过，如果你的代码有副作用，Terser 就不会把它删掉。那是不是所有 Class 都不能被删除了？别慌，我们先把 Babel 编译好的代码分别放到 Rollup 和 Terser 上试一下。什么？居然都被删除了？
 
 
 
@@ -149,9 +217,9 @@ Greet.prototype.greeting = function () {
 
 
 
-细心的同学可能发现了，我们生成的代码怎么多了一行注释 `/*#__PURE__*/` ？没错，这就是示例代码能够被删除的关键。通过这行注释，可以告诉死代码消除工具：这个函数调用是没有副作用的，请放心地删除吧！
+细心的同学可能发现了，我们生成的代码怎么多了一行注释 `/*#__PURE__*/` ？没错，这就是示例代码能够被删除的关键。通过这行注释，可以告诉 JS 压缩工具：这个函数调用是没有副作用的，请放心地删除吧！
 
-Babel7 已经为转译后的 ES6 Class 标记了 `/*#__PURE__*/`，所以在 Uglify 时，我们不用再担心 Class 不能被删除的问题了。对于没有使用 Babel 或者想为项目中其他函数调用标记 `/*#__PURE__*/` 的，可以使用这个三方库 [babel-plugin-pure-calls-annotation](https://github.com/morlay/babel-plugin-pure-calls-annotation)。它可以在需要地方自动为函数调用加上 `/*#__PURE__*/` ，比如当函数调用出现在赋值语句中、作为参数传递给另一个函数时。需要注意的是，使用这个库之后，请不要再像下面这样为有副作用的函数调用赋值，否则可能会导致代码被删除，从而产生 Bug。
+Babel7 已经为转译后的 ES6 Class 标记了 `/*#__PURE__*/`，所以在 Uglify 时，我们不用再担心 Class 不能被删除的问题了。对于项目中没有使用 Babel 或者想为其他函数调用标记 `/*#__PURE__*/` 的，可以使用这个三方库 [babel-plugin-pure-calls-annotation](https://github.com/morlay/babel-plugin-pure-calls-annotation)。它可以在需要地方自动为函数调用加上 `/*#__PURE__*/` ，比如当函数调用出现在赋值语句中、作为参数传递给另一个函数时。需要注意的是，使用这个库之后，请不要再像下面这样为有副作用的函数调用赋值，否则可能会导致代码被删除，从而产生 Bug。
 
 
 
@@ -163,36 +231,20 @@ const subscription = sub$.subscribe(() => {
 
 
 
-## 先 TreeShaking 再编译代码？
+### 小结
 
-先 TreeShaking 再编译？
-
-
-
-```javascript
-// 就拿 lodash 来说吧，在没有 Tree Shaking 之前，我们会将 lodash 的每个方法打包成一个单独的文件，在使用的地方「按需引用」。
-
-// import { map } from 'lodash';
-// import map from 'lodash/map';
-
-
-
-// import {map} from 'lodash'; //lodash-es
-// import map form 'lodash/map';
-// import * as React from 'react';
-```
-
-
-
-所以应该使用 lodash-es 替换 lodash。
-
-通过 Bundle Analyze 分析引入的额外代码是否被删除
+1. 对于有副作用的代码，或者无法判断是否有副作用的代码，Terser 不会将其删除。
+2. 在编译的过程中可能会产生有副作用的代码。比如将代码从 ES6 编译成 ES5。
+3. 尽量少写会产生副作用的代码。
+4. 为函数调用标记 `/*#__PURE__*/` 注释，可以让 Terser 更好地删除无用代码。
 
 
 
 ## 总结
 
-
+1. 使用 ES2015 模块语法（即 `import` 和 `export`）
+2. 确保没有 compiler 将 ES2015 模块语法转换为 CommonJS 模块
+3. 通过将 mode 选项设置为 production，启用 minification(代码压缩) 和 tree shaking
 
 
 
@@ -217,6 +269,14 @@ Rollup: v1.27.5
 
 
 
+
+-----------------------------
+
+
+
+先 Tree Shaking、Uglify 之后，再编译代码？Uglify 不支持 ES5，只能需要使用 Terser。
+
+通过 Bundle Analyze 分析引入的额外代码是否被删除
 
 
 
@@ -253,7 +313,23 @@ const a = /*#__PURE__*/setTitle()
 
 
 
+```javascript
+// import { map } from 'lodash';
+// import map from 'lodash/map';
 
+
+
+// import {map} from 'lodash'; //lodash-es
+// import map form 'lodash/map';
+// import * as React from 'react';
+```
+
+
+
+
+
+1. 在代码编译的过程中可能会产生有副作用的代码。
+2. TypeScript、Babel 这样的编译工具。
 
 
 
