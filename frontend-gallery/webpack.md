@@ -283,6 +283,13 @@ Rollup: v1.27.5
 
 
 
+对 Tree Shaking 比较友好的场景：
+
+- CSS in JS
+- 赋值给 Observeable 的 prototype 会导致整个 Observable 无法 Tree Shaking？分析的成本太大，如果是 import export，只在文件的顶层出现，不会出现在 if else 中。只需要拿到 AST 的第一层进行分析。
+
+
+
 -----------------------------
 
 
