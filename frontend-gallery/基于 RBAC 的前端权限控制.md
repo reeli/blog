@@ -129,7 +129,24 @@ RESTful 是目前最流行的 API 设计规范。它的核心思想就是用「�
 
 因此，可以将权限管理与 RESTful API 关联起来。比如，A 角色对 `book` 资源拥有 `delete` 权限，那么 A 角色就一定可以调用 `DELETE /book/ID`  API，自然也能看到页面上的删除按钮。
 
-我们可以让后端返回当前用户可用的接口列表，用于开关前端组件。接口最好用 API 唯一标识替代（如 `operationId`），方便前端使用。如下所示：
+我们可以让后端返回当前用户可用的接口列表，用于开关前端组件。比如：
+
+
+
+```json
+{
+  "permissions": [
+    "GET,/api/books",
+    "POST,/api/book/{id}",
+    "PATCH,/api/book/{id}",
+    "DELETE,/api/book/{id}"
+  ]
+}
+```
+
+
+
+但接口最好用 API 唯一标识替代（如 `operationId`），方便前端使用。如下所示：
 
 
 
@@ -297,7 +314,13 @@ function needPermissions<TProps>(...args: Array<AccessControlComponent | permiss
 
 
 
+
+
 ------------------
+
+
+
+
 
 希望大家在指定权限控制方案时，能够清楚每种方案的利与弊。
 
