@@ -159,37 +159,56 @@ hasPermission(permissions, "DeleteBook") && <DeleteButton />;
 
 ### 页面权限控制
 
-页面的权限控制，其实就是对路由的权限控制。如果根据角色列表去控制导航菜单的渲染，同样会遇到角色动态变化的问题。如果让 BFF 返回路由开关，需要增加一个额外的接口。如果根据接口列表去判断，就必须确定页面调用了哪些接口。
+页面的权限控制，其实就是对路由的权限控制。我们可以根据用户当前所拥有的权限，去判断他是否能访问某个页面，从而决定是否渲染某个路由导航。
+
+与组件的权限控制类似，页面的权限控制也面临着相同的问题。如果根据角色列表去控制导航菜单的渲染，同样会遇到角色动态变化的问题。如果让 BFF 返回路由开关，还需要增加一个额外的接口。因此，最好还是根据用户可访问的接口列表去开关路由。
 
 
 
-我们可以根据不同的权限去渲染不同的导航菜单。
+#### 配置路由
+
+在配置路由时，我们可以增加一个状态 `visible ` 用于开关路由。在获取到当前用户可访问的接口列表之后，再将用户可访问的路由过滤出来。
 
 
 
-接口列表配置到路由配置中。
+```typescript
+const routes = [
+  {
+    path: "/home",
+    exact: true,
+    visible: (permissions) => hasOneOfPermissions(["GetBook", "GetPerson"], permissions),
+  },
+  {
+    path: "/list",
+    exact: true,
+    visible: (permissions) => hasAllPermissions(["GetList", "ListBook"], permissions),
+  },
+];
+
+filterRoutesByPermissions(routes, permissions);
+```
 
 
 
-当然，这个方案在没有自动化工具辅助时，会显得比较繁琐。可以通过 Babel 插件去自动添加。如果是手动加推导，可能会出现遗漏的情况，debug 起来更困难。
+这个方案相对来说比较简单，但是容易遗漏配置项。
 
 
 
 #### 组件推导
 
+页面一定会使用组件，因此可以根据页面使用到的组件推导出页面的权限。当然这里需要对组件进行一些改造。比如上一小节的 `DeleteButton` ：
 
 
-如果觉得很麻烦，可以在页面这一层就全部配置完成。组件推导适合通过工具来去自动配置。当页面比较复杂时，容易遗漏。
-
-
-
-页面一定会使用组件，我们可以根据页面使用到组件进行推导，当然这里需要到对组件进行一些改造。比如上一小节的 DeleteButton
 
 ```tsx
 const ACDeleteButton = needPermissions("DeleteBook")(DeleteButton)
 ```
 
-我们可以封装 HoC 来包裹原组件， 使之在 Function Component (class?，2019 年了为啥还要用 class）的基础上，我们让 函数持有 `shouldRender(permissions: {}) => bool` 的方法方便推导。
+
+
+我们可以封装 HOC 来包裹原组件， 使之在 Function Component 的基础上，让函数持有 `shouldRender(permissions: {}) => bool` 方法以便推导：
+
+
 
 ```tsx
 interface AccessControlComponent<TProps> {
@@ -199,10 +218,13 @@ interface AccessControlComponent<TProps> {
 
 ```
 
-在其他组件，我们可以通过如下方式进行组合直至页面
+
+
+在其他组件，我们可以通过如下方式进行组合直至页面：
+
+
 
 ```tsx
-
 const ACSection = needPermissions(ACDeleteButton)(() => (
 	<div>
     <ACDeleteButton/>
@@ -216,46 +238,74 @@ const ACPage = needPermissions(ACSection)(() => (
 ))
 ```
 
-最后 `ACPage` 注册到路由，在渲染路由菜单时，我们可以就直接使用  `ACPage.shouldRender` 进行判断是否需要渲染页面对应的菜单（页面自身已经有控制）
+
+
+最后将 `ACPage` 注册到路由，在渲染导航菜单时，我们可以直接使用  `ACPage.shouldRender` 判断是否需要渲染页面对应的菜单（页面自身已经有控制）。
 
 
 
-`needPermissions` 实现为
+`needPermissions` 实现如下：
+
+
 
 ```tsx
 function needPermissions<TProps>(...args: Array<AccessControlComponent | permissionKey>) {
-  const permissionKeys: string[] = []
-  const accessControlComponents: AccessControlComponent[] = []
-  
+  const permissionKeys: string[] = [];
+  const accessControlComponents: AccessControlComponent[] = [];
+
   args.forEach((arg) => {
     if (typeof arg == "string") {
-      permissionKeys.push(arg)
+      permissionKeys.push(arg);
     } else {
-      accessControlComponents.push(arg)
+      accessControlComponents.push(arg);
     }
-  })
-  
-  const shouldRender = (permissions: {}) => {
-    return every(permissionKeys, (permissionKey) => hasPermission(permissions, permissionKey)) &&
-      every(accessControlComponents, (accessControlComponent) => accessControlComponent.shouldRender(permissions))
-  } 
-  
-  return (Comp: FunctionCompoment<TProps>) {
-    const ac = (props: props) => {
-     const { permissions } = useContext(PermissionsContext);
+  });
 
-     if (shouldRender(permissions)) {
-       return <Comp {...props} />
-     }
-     return null
-    }
-    
-    ac.shouldRender = shouldRender
-    
-    return ac
-  }
+  const shouldRender = (permissions: {}) => {
+    return (
+      every(permissionKeys, (permissionKey) => hasPermission(permissions, permissionKey)) &&
+      every(accessControlComponents, (accessControlComponent) => accessControlComponent.shouldRender(permissions))
+    );
+  };
+
+  return (Comp: FunctionCompoment<TProps>) => {
+    const ac = (props: props) => {
+      const { permissions } = useContext(PermissionsContext);
+
+      if (shouldRender(permissions)) {
+        return <Comp {...props} />;
+      }
+      return null;
+    };
+
+    ac.shouldRender = shouldRender;
+
+    return ac;
+  };
 }
 ```
+
+
+
+组件推导的方案更适合通过 Babel 插件去自动配置。如果没有自动化工具辅助，这个方案会显得比较繁琐。
+
+
+
+## 最后
+
+本文讨论了前端实现 RBAC 权限控制的几种方案。这些方案没有绝对的对错之分，只有「适合」与「不适合」。就拿第一个「错误」的方案来说，它确实缺少了一些灵活性，但如果你项目中的角色变动很少，采用这个方案也不是不可以。只不过你需要明确这个方案带来的「利」与「弊」。
+
+
+
+------------------
+
+希望大家在指定权限控制方案时，能够清楚每种方案的利与弊。
+
+
+
+可以通过 Babel 插件去自动添加。如果是手动加推导，可能会出现遗漏的情况，debug 起来更困难。
+
+如果觉得很麻烦，可以在页面这一层就全部配置完成。组件推导适合通过工具来去自动配置。当页面比较复杂时，容易遗漏。
 
 
 
@@ -264,18 +314,6 @@ Hook ？
 
 
 如何 Debug？
-
-
-
-## 最后
-
-本文讨论了权限控制的几种方案以供大家参考。但这些方案都有利有弊，希望大家根据实际的业务场景去选择最适合的方案。
-
-
-
-
-
-------------------
 
 
 
