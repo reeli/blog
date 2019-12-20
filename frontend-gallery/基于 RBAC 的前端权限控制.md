@@ -64,8 +64,10 @@ const permissionsConfig = {
 
 
 ```typescript
-const { canViewButton } = useContext(PermissionsContext);
-canViewButton && <Button />;
+const ACButton = () => {
+ const { canViewButton } = useContext(PermissionsContext);
+ return canViewButton && <Button />; 
+}
 ```
 
 
@@ -161,9 +163,10 @@ RESTful 是目前最流行的 API 设计规范。它的核心思想就是用「�
 
 
 ```tsx
-const { permissions } = useContext(PermissionsContext);
-
-hasPermission(permissions, "DeleteBook") && <DeleteButton />;
+const ACDeleteButton = () => {
+  const { permissions } = useContext(PermissionsContext);
+  return hasPermission("DeleteBook")(permissions) && <DeleteButton />;
+}
 ```
 
 
@@ -205,7 +208,7 @@ filterRoutesByPermissions(routes, permissions);
 
 
 
-这个方案相对来说比较简单，但是容易遗漏配置项。
+这个方案相对来说比较简单，但是容易遗漏配置项。特别是当只要任意一个权限满足就渲染路由时，很难发现某个接口权限漏掉了。
 
 
 
@@ -227,8 +230,8 @@ const ACDeleteButton = needPermissions("DeleteBook")(DeleteButton)
 
 ```tsx
 interface AccessControlComponent<TProps> {
-  (props: TProps) => JSX.Element | null
-  shouldRender: (permissions: {}) => bool 
+  (props: TProps) => JSX.Element | null;
+  shouldRender: (permissions: {}) => bool;
 }
 
 ```
@@ -241,7 +244,7 @@ interface AccessControlComponent<TProps> {
 
 ```tsx
 
-const ACSection = needPermissions(ACDeleteButton, "ListBook")(() => (
+const ACSection = needPermissions(ACDeleteButton)(() => (
 	<div>
     <ACDeleteButton/>
   </div>	
@@ -249,65 +252,14 @@ const ACSection = needPermissions(ACDeleteButton, "ListBook")(() => (
 
 const ACPage = needPermissions(ACSection)(() => {}(
 	<div>
-    { hasPermission(permissions, "DeleteBook") && <DeleteButton/> }
-  </div>	
-))
-
-const ACPage2 = needPermissions(ACSection)(() => (
-	<div>
-    { hasPermission(permissions, "DeleteBook") && <DeleteButton/> }
+    <ACSection/>
   </div>	
 ))
 ```
 
 
 
-最后将 `ACPage` 注册到路由，在渲染导航菜单时，我们可以直接使用  `ACPage.shouldRender` 判断是否需要渲染页面对应的菜单（页面自身已经有控制）。
-
-
-
-`needPermissions` 实现如下：
-
-
-
-```tsx
-function needPermissions<TProps>(...args: Array<AccessControlComponent | permissionKey>) {
-  const permissionKeys: string[] = [];
-  const accessControlComponents: AccessControlComponent[] = [];
-
-  args.forEach((arg) => {
-    if (typeof arg == "string") {
-      permissionKeys.push(arg);
-    } else {
-      accessControlComponents.push(arg);
-    }
-  });
-
-  const shouldRender = (permissions: {}) => {
-    return (
-      every(permissionKeys, (permissionKey) => hasPermission(permissions, permissionKey)) &&
-      every(accessControlComponents, (accessControlComponent) => accessControlComponent.shouldRender(permissions))
-    );
-  };
-
-  return (Comp: FunctionCompoment<TProps>) => {
-    const ac = (props: props) => {
-      const { permissions } = useContext(PermissionsContext);
-
-      if (shouldRender(permissions)) {
-        return <Comp {...props} />;
-      }
-      return null;
-    };
-
-    ac.shouldRender = shouldRender;
-
-    return ac;
-  };
-}
-```
-
-
+最后将 `ACPage` 注册到路由，在渲染导航菜单时，我们可以直接使用  `ACPage.shouldRender` 判断是否需要渲染页面对应的菜单。
 
 组件推导的方案更适合通过 Babel 插件去自动配置。如果没有自动化工具辅助，这个方案会显得比较繁琐。
 
@@ -319,11 +271,49 @@ function needPermissions<TProps>(...args: Array<AccessControlComponent | permiss
 
 
 
-
-
 ------------------
 
 
+
+带权限的组件复用问题。HOC over Hooks。权限的定义更适合装饰器模式，我们可以抽一个不带权限控制的原始组件，再通过高阶组件去修饰它，从而得到一个带权限配置的新组件，权限可以跟随新组件进行复用。这样，当需要复用原始组件时，也很方便。我们可以更容易的在带权限和不带权限的组件之间自由切换。
+
+
+
+
+
+
+
+
+
+
+
+带权限的组件。
+
+hasPermission(xxx) && <div>test1</div>
+
+hasPermission(xxx) && <div>test2</div>
+
+所有带权限的，都需要抽组件。
+
+带权限、可复用的时候。
+
+
+
+
+
+
+
+
+
+
+
+**如果没有自动化工具，QA 测试起来也非常困难。可以将权限渲染到 HTML 节点上，方便 QA 测试。**
+
+
+
+
+
+- 高阶组件
 
 
 
