@@ -1,6 +1,4 @@
-当我们讨论「前端应用的权限控制」时，不是在讨论如何去「控制权限」，而是在说如何保证「更好的用户体验」。因为前端本就无法实现真正的权限控制。
-
-大部分时候，前端应用的权限控制其实就是：根据不同的权限显示或隐藏某个页面以及 UI 组件。目的就是提升用户体验，并减少发起无用的 HTTP 请求。
+当我们讨论到前端应用的权限控制时，不是在讨论如何去控制权限，而是在讨论如何将用户权限反映到页面元素的显隐上。如果用户没有权限访问请求，不仅会造成请求资源的浪费，还会降低用户体验。前端的权限控制就是为了解决这类问题。
 
 RBAC 是目前普遍使用的一种权限模型。本文会讨论如何基于 RBAC 权限模型去实现前端应用的权限控制。
 
@@ -242,15 +240,22 @@ interface AccessControlComponent<TProps> {
 
 
 ```tsx
-const ACSection = needPermissions(ACDeleteButton)(() => (
+
+const ACSection = needPermissions(ACDeleteButton, "ListBook")(() => (
 	<div>
     <ACDeleteButton/>
   </div>	
 ))
 
-const ACPage = needPermissions(ACSection)(() => (
+const ACPage = needPermissions(ACSection)(() => {}(
 	<div>
-    <ACSection/>
+    { hasPermission(permissions, "DeleteBook") && <DeleteButton/> }
+  </div>	
+))
+
+const ACPage2 = needPermissions(ACSection)(() => (
+	<div>
+    { hasPermission(permissions, "DeleteBook") && <DeleteButton/> }
   </div>	
 ))
 ```
