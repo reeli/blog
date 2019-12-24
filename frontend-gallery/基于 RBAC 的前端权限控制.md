@@ -177,23 +177,27 @@ const ACDeleteButton = () => {
 
 #### 权限的复用
 
-如果多个地方使用了相同的 UI 和权限，为了方便复用，我们可以封装一个单独的组件。比如上个例子中的 `ACDeleteButton`，包含了 `DeleteButton` 以及它对应的权限。`ACDeleteButton` 可以更好地在其他地方进行复用。
+有时候，我们需要考虑带权限组件的复用问题。比如一个组件用在了很多地方，并且每个地方需要的权限控制也相同。为了方便复用，可以把权限控制的逻辑和组件一起，封装成一个单独的组件。比如上个例子中的 `ACDeleteButton`。
+
+但是，这种场景更适合使用高阶组件。因为高阶组件采用了装饰器模式，可以增强原有组件的功能，并且不破坏它原有的特性。我们可以抽象一个不带权限控制的原始组件，再通过高阶组件去修饰它，从而得到一个带权限配置的新组件。这样，当需要复用原始组件时，也很方便。比如：
 
 
 
+```typescript
+export const needOneOfPermission = (...permissionKeys: string[]) => {
+  const { permissions } = useContext(PermissionContext);
+  return (Comp) => {
+    return hasOneOfPermission(permissionKeys)(permissions) && <Comp />;
+  };
+};
+
+const ACBookList = needOneOfPermission("ListBook")(BookList);
+const ACBook = needOneOfPermission("GetBook")(Book);
+```
 
 
 
-
-带权限的组件复用问题。HOC over Hooks。权限的定义更适合装饰器模式，我们可以抽一个不带权限控制的原始组件，再通过高阶组件去修饰它，从而得到一个带权限配置的新组件，权限可以跟随新组件进行复用。这样，当需要复用原始组件时，也很方便。我们可以更容易的在带权限和不带权限的组件之间自由切换。
-
-
-
-
-
-
-
-
+通过高阶组件，我们可以让一个组件在「带权限」和「不带权限」之间快速切换。
 
 
 
@@ -301,11 +305,11 @@ const ACPage = needPermissions(ACSection)(() => {}(
 
 
 
+带权限的组件复用问题。HOC over Hooks。权限的定义更适合装饰器模式，我们可以抽一个不带权限控制的原始组件，再通过高阶组件去修饰它，从而得到一个带权限配置的新组件，权限可以跟随新组件进行复用。这样，当需要复用原始组件时，也很方便。我们可以更容易的在带权限和不带权限的组件之间自由切换。
+
+
+
 如果将权限控制的逻辑包含到组件内，那么它将随着组件进行复用。
-
-
-
-
 
 
 
