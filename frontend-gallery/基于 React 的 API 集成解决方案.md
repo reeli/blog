@@ -448,3 +448,19 @@ useEffect(() => {
 
 自动生成代码工具为我们省去了很大一部分工作量，再结合我们之前讲过的 useRequest、useTempData 和 useEntity，集成 API 就变成了一项非常轻松的工作。
 
+
+
+
+
+-----
+
+在同一个组件中，连续调用了多次 `useRequest` 生成的 `request` 方法。可能会导致 `onSuccess ` 只执行一次的问题。因为在 `useReqeust` 中有这样一段代码：
+
+
+
+```tsx
+lastActionRef.current = action;
+```
+
+
+
