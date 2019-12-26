@@ -454,13 +454,33 @@ useEffect(() => {
 
 -----
 
-在同一个组件中，连续调用了多次 `useRequest` 生成的 `request` 方法。可能会导致 `onSuccess ` 只执行一次的问题。因为在 `useReqeust` 中有这样一段代码：
+__问题__:
+
+
+
+在同一个组件中，连续调用了多次 `useRequest` 生成的 `request` 方法。比如连续上传多个文件。可能会导致 `onSuccess ` 只执行一次的问题。因为在 `useReqeust` 中有这样一段代码：
 
 
 
 ```tsx
 lastActionRef.current = action;
 ```
+
+
+
+连续调用两次 request，我们这里用 requestA 和 requestB 来表示。调用 requestB 时，lastAction 就被 B action  给覆盖了，导致在比较 `requestSuccessAction.meta.previousAction.payload` 和 `lastActionRef.current.payload` 不相等（两次请求 type 相同，但是 payload 不同）。这样就会导致某次 request 的 success callback 无法被执行。
+
+
+
+```typescript
+isEqual(requestSuccessAction.meta.previousAction.payload, lastActionRef.current.payload)
+```
+
+
+
+但是有时候，我们又必须去比较 `payload` 是否相同。比如一个页面有 A 和 B 两个组件，这个两个组件调用了同一个 API，但是请求参数不同。A 和 B 组件中都分别使用了 `useReqeust` 去发起请求。如果不比较 payload，那么 A request 成功之后，就可能调用 A 和 B 中两个 useRequest 中的 onSuccess 回调（因为 A request 和 B request 的 type 相同），从而引发 Bug。
+
+
 
 
 
