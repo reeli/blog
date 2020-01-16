@@ -482,5 +482,8 @@ isEqual(requestSuccessAction.meta.previousAction.payload, lastActionRef.current.
 
 
 
+- API 去重时应该及时清除缓存 `cacheRequestList`
+- A 页面上有两个组件，a1 和 a2，这两个组件都会发起相同的请求，但是 a1 组件需要等到另一个 API 返回时才渲染（也就是发起请求），而 a2 组件就只直接进入页面 A 时就发起请求，因此 a1 和 a2 之间会有一个时间差，这个时间差可能会大于 API 请求去重的时间间隔，因此无法去重。解决方案：a2 从 store 中去取数据，而不是发起请求
+
 
 
