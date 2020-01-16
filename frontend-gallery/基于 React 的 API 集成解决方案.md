@@ -304,7 +304,7 @@ const [requestA] = useRequest(A, {
 1. 每个相同 request action 所对应的 onSuccess/onFail 回调在请求成功时都会被执行。
 1. 只执行真正发起请求的这个 action 所对应的 onSuccess/onFail 回调。
 
-对于第一个场景来说，我们可以判断 action 的 type 和 payload 是否一致，如果一致就执行对应的 callback，这样相同 action 的回调都可以被执行。对于第二个场景，我们可以从 action 的 payload 上做点「手脚」，action 的 payload 放置的是我们发起请求时需要的 request config，通过添加一个 UUID，可以让这个和其他 action「相同」的 action 变得「不同」，这样就只会执行这个 request action 所对应的回调函数。
+对于第一个场景来说，我们可以判断 action 的 type 和 payload 是否一致，如果一致就执行对应的 callback，这样相同 action 的回调都可以被执行。对于第二个场景，我们可以从 action 的 payload 上做点「手脚」，action 的 payload 放置的是我们发起请求时需要的 request config，通过添加一个 UUID，可以让这个和其他 action「相同」的 action 变得「不同」，这样就只会执行这个 request action 所对应的回调函数。PS: axios 的 payload 是一个 AxiosRequestConfig 类型，里面有很多字段，加一个 uuid 不会影响最后 ajax 请求的发起
 
 
 #### 组件卸载
@@ -484,6 +484,7 @@ isEqual(requestSuccessAction.meta.previousAction.payload, lastActionRef.current.
 
 - API 去重时应该及时清除缓存 `cacheRequestList`
 - A 页面上有两个组件，a1 和 a2，这两个组件都会发起相同的请求，但是 a1 组件需要等到另一个 API 返回时才渲染（也就是发起请求），而 a2 组件就只直接进入页面 A 时就发起请求，因此 a1 和 a2 之间会有一个时间差，这个时间差可能会大于 API 请求去重的时间间隔，因此无法去重。解决方案：a2 从 store 中去取数据，而不是发起请求
+- 每个 API 都需要 50 ms 的延迟，虽然肉眼看不出变化，但测试可能会有问题？
 
 
 
