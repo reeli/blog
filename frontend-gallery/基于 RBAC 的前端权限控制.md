@@ -809,3 +809,4 @@ allOf A,B,C
 
   
 
+- [kubernetes 权限设计方案](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
