@@ -810,3 +810,14 @@ allOf A,B,C
   
 
 - [kubernetes 权限设计方案](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
+
+
+
+```ts
+
+shouldShow(expr)(data) && Button
+
+const validate = (data: any) => eval(_.template(`{{ .status }} == "AAA"`)(data))
+```
+
+表达式的问题是：后端不知道应该如何构造表达式？还是表达式有一套通用的方案？类似于一门语言？
