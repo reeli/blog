@@ -307,6 +307,20 @@ const ACPage = needPermissions(ACSection)(() => {}(
 
 
 
+组件权限控制可能会由几个因素共同决定：
+
+1. 权限。用户是否有权限调用某个 API。（只有权限交给 BFF 做也会有问题，由于 BFF 的设计有时无法返回一个 按钮的状态）
+
+2. validation。后端会根据一些数据状态去校验当前用户是否应该看到某个 button。
+
+3. UI 状态。前端会根据一些 UI 状态去显隐某个 Button。（交给 BFF 做有问题）
+
+
+
+![Screen Shot 2020-02-11 at 11.07.48 AM](基于 RBAC 的前端权限控制.assets/Screen Shot 2020-02-11 at 11.07.48 AM.png)
+
+
+
 
 
 
