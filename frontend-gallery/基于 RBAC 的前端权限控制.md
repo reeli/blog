@@ -121,6 +121,10 @@ hasPermission && age >= 18 && <Button />
 
 
 
+【进入页面时，有一个 API 专门用于获取页面上的所有 flag，可以解决某些场景下没有后端 API 调用的问题】
+
+Attribute-Based Access Control
+
 #### 将后端权限映射到前端
 
 RESTful 是目前最流行的 API 设计规范。它的核心思想就是用「动词 + 宾语」的结构来描述客户端发出的数据操作指令。
@@ -321,7 +325,11 @@ const ACPage = needPermissions(ACSection)(() => {}(
 
 
 
+将权限标记在 HTML 上，方便 DEV 开发以及 QA 测试
 
+
+
+是否可配置？配置共享？比如动态表单
 
 
 
