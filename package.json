@@ -1,0 +1,24 @@
+{
+  "name": "@reeli/books",
+  "version": "1.0.0",
+  "description": "",
+  "main": "a.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reeli/books.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/reeli/books/issues"
+  },
+  "homepage": "https://github.com/reeli/books#readme"
+}
