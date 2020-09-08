@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/reeli/blog/issues"
   },
-  "homepage": "https://github.com/reeli/blog#readme"
+  "homepage": "https://github.com/reeli/blog#readme",
+  "devDependencies": {
+    "vuepress": "^1.5.4"
+  }
 }
