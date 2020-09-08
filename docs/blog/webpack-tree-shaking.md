@@ -282,7 +282,7 @@ const a = /*#__PURE__*/setTitle()
 
 
 
-![image-20191130154710190](webpack.assets/image-20191130154710190.png)
+![](../assets/webpack_tree-shaking-6.png)
 
 
 
