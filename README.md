@@ -10,7 +10,7 @@
 git clone https://github.com/reeli/blog.git
 cd blog
 npm install
-npm run docs:dev
+npm start
 ```
 
 最后，打开浏览器，访问 http://localhost:8080/。 

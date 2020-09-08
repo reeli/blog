@@ -6,10 +6,9 @@
     "doc": "docs"
   },
   "scripts": {
-    "docs:dev": "vuepress dev docs",
-    "docs:build": "vuepress build docs",
-    "deploy": "npm run docs:build && npm run surge",
-    "surge": "npm install --global surge && surge --project ./docs/.vuepress/dist --domain reeli.surge.sh"
+    "start": "vuepress dev docs",
+    "build": "vuepress build docs",
+    "deploy": "./deploy.sh"
   },
   "repository": {
     "type": "git",
