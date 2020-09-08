@@ -26,7 +26,6 @@
     "@vuepress/plugin-google-analytics": "^1.5.4",
     "@vuepress/plugin-medium-zoom": "^1.5.4",
     "@vuepress/plugin-pwa": "^1.5.4",
-    "husky": "^4.3.0",
     "vuepress": "^1.5.4"
   }
 }
