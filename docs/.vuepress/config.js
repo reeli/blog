@@ -51,6 +51,14 @@ module.exports = {
           children: ["rxjs_reactive-programming"]
         },
         {
+          title: "SVG",
+          collapsable: false,
+          children: [
+            "svg_deep-learning-svg-1",
+            "svg_deep-learning-svg-2",
+          ]
+        },
+        {
           title: "核心模型",
           collapsable: false,
           children: [
