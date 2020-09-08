@@ -22,7 +22,7 @@ SVG 全称 Scalable Vector Graphics (可缩放矢量图形)。它是一种用来
 </svg>
 ```
 
-![](../assets/svg-learning/svg-1.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-1.png)
 
 > 在同一个位置创建了 50 * 50 的两个矩形，由于越后面的元素越可见，因此我们只能看到绿色的矩形，蓝色的矩形被它遮住了。
 
@@ -70,7 +70,7 @@ SVG 视窗和浏览器视窗很像。你可以通过 SVG 视窗看到画布，�
 </svg>
 ```
 
-![](../assets/svg-learning/svg-2.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-2.png)
 
 > 在 200px * 200px 的视窗内，以画布的 0,0 点(画布的原点和视窗的原点默认对齐)为圆心，半径为 100 画圆
 
@@ -83,7 +83,7 @@ SVG 视窗和浏览器视窗很像。你可以通过 SVG 视窗看到画布，�
 	<circle cx="0" cy="0" r="50" fill="green"/>
 </svg>
 ```
-![](../assets/svg-learning/svg-3.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-3.png)
 
 ## 深入理解画布和视窗
 
@@ -91,7 +91,7 @@ SVG 视窗和浏览器视窗很像。你可以通过 SVG 视窗看到画布，�
 
 为了更好的去理解这两个抽象概念，你可以把视窗想象成飞机上的窗户，把画布想象成无穷无尽的风景，只有在这个窗口内的风景才能被看到。 
 
-![](../assets/svg-learning/viewport.jpg)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/viewport.jpg)
 
 ### 画布和视窗之间的关联
 

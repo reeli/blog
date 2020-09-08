@@ -9,7 +9,7 @@
 2. `X 轴`的正方向`向右`，从 0,0 点开始向右， x 逐渐增大。`Y 轴`的正方向`向下`，从 0,0 点开始向下， y 逐渐增大。 
 3. 坐标以像素为单位
 
-![](../assets/svg-learning/grid-coordinate.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/grid-coordinate.png)
 
 ```html
 <svg width="100" height="100" style="outline: 2px solid red">
@@ -73,7 +73,7 @@ viewBox 接收四个参数值，分别是 `min-x`，`min-y`，`width`，`height`
 </svg>
 ```
 
-![](../assets/svg-learning/svg-4.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-4.png)
 
 
 图一
@@ -86,14 +86,14 @@ viewBox 接收四个参数值，分别是 `min-x`，`min-y`，`width`，`height`
 </svg>
 ```
 
-![](../assets/svg-learning/svg-5.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-5.png)
 
 
 图二
 
 通过 viewBox 的 `min-x` 和 `min-y` 两个参数，我们将 viewBox 声明的区域分别向左和上进行了平移，这时我们以 0,0 为圆心，半径为 50 画圆，正好能够将整个圆显示到 viwBox 声明的区域中，然后再将这个坐标系映射到 100px * 100px 的视窗中，就大功告成了。
 
-![](../assets/svg-learning/svg-viewBox-1.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-viewBox-1.png)
 
 
 ### 缩放
@@ -106,7 +106,7 @@ viewBox 接收四个参数值，分别是 `min-x`，`min-y`，`width`，`height`
 </svg>
 ```
 
-![](../assets/svg-learning/svg-6.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-6.png)
 
 
 当 viewBox 的宽高小于视窗的宽高时，相当于放大。
@@ -117,7 +117,7 @@ viewBox 接收四个参数值，分别是 `min-x`，`min-y`，`width`，`height`
 </svg>
 
 ```
-![](../assets/svg-learning/svg-7.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-7.png)
 
 
 当 viewBox 的宽高大于视窗的宽高时，相当于缩小。
@@ -127,7 +127,7 @@ viewBox 接收四个参数值，分别是 `min-x`，`min-y`，`width`，`height`
     <circle cx=0 cy=0 r=50 fill="green"/>
 </svg>
 ```
-![](../assets/svg-learning/svg-8.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-8.png)
 
 
 ### 通过百分比和 viewBox 让 SVG 图形进行缩放
@@ -156,7 +156,7 @@ viewBox 接收四个参数值，分别是 `min-x`，`min-y`，`width`，`height`
 
     	在纸上画出 viewBox 声明的区域,如下图:
     	
-    ![](../assets/svg-learning/svg-viewBox-2.png)
+    ![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-viewBox-2.png)
 
 	
 	>  橙色区域为 viewBox 声明的区域，从粉色的区域移动到橙色区域可以得出 viewBox 的 min-x = -50 min-y = -100，在这个区域只有上半圆可见，因此我们最后看到的也就只是这个上半圆。
@@ -169,7 +169,7 @@ viewBox 接收四个参数值，分别是 `min-x`，`min-y`，`width`，`height`
 	</svg>
 	```
 	
-	![](../assets/svg-learning/svg-11.png)
+	![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-11.png)
 
 	
 	
@@ -225,7 +225,7 @@ xMidYmid => 中-中对齐
 </svg>
 ```
 
-![](../assets/svg-learning/svg-12.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-12.png)
 
 
 在上面的例子中，我们并没有设置 preserveAspectRatio ，但是根据我们之前讲过的知识，不难发现在 `<svg>` 上作用着一个隐形的 `preserveAspectRatio="xMidYMid meet"`。
@@ -235,12 +235,12 @@ xMidYmid => 中-中对齐
 	<rect x=10 y=10 width=50 height=50 fill="green"/>
 </svg>
 ```
-![](../assets/svg-learning/svg-13.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-13.png)
 
 
 那么 `preserveAspectRatio="xMidYMid meet"` 是如何作用在 SVG 上的呢？请看下面的图:
 
-![](../assets/svg-learning/svg-meet-1.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-meet-1.png)
 
 上图中 viewport  宽 200 高 100，viewBox 宽 100 高 100， x 横轴比例是 2， y 纵轴比例是 1。
 `xMidYMid`  让 viewBox 和 viewPort 的中心对齐，和 viewport y 轴上边缘对齐。
@@ -258,7 +258,7 @@ xMidYmid => 中-中对齐
 这时 viewBox 的宽度超过 viewport 的宽度了（如图一），所以 viewBox 就会缩小以适应 viewport，因为 meet 会让 viewBox 保持比例来进行缩放，所以你可以想象成按住viewBox 的右下角，缩小 viewBox 至 viewport 的大小 (如图二)。
 
 
-![](../assets/svg-learning/svg-meet-2.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-meet-2.png)
 
 说完了 `meet` 下面我们再来说说 slice， slice 虽然会保持宽高比进行缩放，但是会在比例小的方向放大填满 viewport。比如设置 viewBox 宽 100 高 100，viewport 宽 200 高 100，在 viewport 的 x 轴方向还有空间，所以会将 viewBox 在横轴上进行放大，结果就是我们的好好的正方形被拉成了矩形。
 
@@ -268,7 +268,7 @@ xMidYmid => 中-中对齐
 </svg>
 ```
 
-![](../assets/svg-learning/svg-14.png)
+![](https://raw.githubusercontent.com/reeli/blog/master/docs/assets/svg-learning/svg-14.png)
 
 ## 结尾
 
