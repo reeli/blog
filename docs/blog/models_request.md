@@ -176,7 +176,7 @@ Promise 和 callback 都像「泼出去的水」，正所谓「覆水难收」�
 
 
 
-![image.png](基于 React 的 API 集成解决方案.assets/resize,w_1244-20190911221920949.png)
+![](../assets/models-request-flow.png)
 
 
 
@@ -320,7 +320,7 @@ const [requestA] = useRequest(A, {
 
 
 
-![image.png](基于 React 的 API 集成解决方案.assets/1567418882391-583b61d5-7c01-4ced-a992-7cf648f8184a-20190911222034323.png)
+![](../assets/models-request-drawer.png)
 
 
 

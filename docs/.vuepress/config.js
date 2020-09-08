@@ -46,14 +46,24 @@ module.exports = {
           ]
         },
         {
+          title: "RxJS",
+          collapsable: false,
+          children: ["rxjs_reactive-programming"]
+        },
+        {
           title: "性能优化",
           collapsable: false,
           children: []
         },
         {
-          title: "打包和部署",
+          title: "打包",
           collapsable: false,
           children: ["build_webpack-tree-shaking"]
+        },
+        {
+          title: "部署",
+          collapsable: false,
+          children: []
         },
         {
           title: "自动化工具",
