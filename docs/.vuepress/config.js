@@ -51,6 +51,14 @@ module.exports = {
           children: ["rxjs_reactive-programming"]
         },
         {
+          title: "核心模型",
+          collapsable: false,
+          children: [
+            "models_authorization",
+            "models_request"
+          ]
+        },
+        {
           title: "性能优化",
           collapsable: false,
           children: []
