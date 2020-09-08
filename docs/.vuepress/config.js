@@ -31,6 +31,10 @@ module.exports = {
           {
             text: "react-rx-form",
             link: "https://github.com/reeli/react-rx-form"
+          },
+          {
+            text: "sketch-svg-to-react-component",
+            link: "https://github.com/reeli/sketch-svg-to-react-component"
           }
         ]
       }
