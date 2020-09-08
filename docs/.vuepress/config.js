@@ -1,6 +1,7 @@
 module.exports = {
   title: "橘子的前端杂记",
-  description: "",
+  description: "个人博客。记录实际开发中遇到的问题及解决方案，日常的思考和总结、面试知识点、读书笔记等。",
+  ga: "UA-177434976-1",
   markdown: {
     lineNumbers: true
   },
@@ -26,7 +27,7 @@ module.exports = {
         {
           title: "打包和部署",
           collapsable: false,
-          children: [ "webpack-tree-shaking"]
+          children: ["webpack-tree-shaking"]
         },
         {
           title: "自动化工具",
