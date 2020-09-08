@@ -1,6 +1,7 @@
 module.exports = {
   title: "橘子的前端杂记",
-  description: "个人博客。记录实际开发中遇到的问题及解决方案，日常的思考和总结、面试知识点、读书笔记等。",
+  description:
+    "个人博客。记录实际开发中遇到的问题及解决方案，日常的思考和总结、面试知识点、读书笔记等。",
   markdown: {
     lineNumbers: true
   },
@@ -13,8 +14,26 @@ module.exports = {
     nav: [
       {
         text: "博客",
-        link: "/blog/",
+        link: "/blog/"
       },
+      {
+        text: "开源项目",
+        link: "/opensource/",
+        items: [
+          {
+            text: "ts-codegen",
+            link: "https://github.com/reeli/ts-codegen"
+          },
+          {
+            text: "swagger-faker",
+            link: "https://github.com/reeli/swagger-faker"
+          },
+          {
+            text: "react-rx-form",
+            link: "https://github.com/reeli/react-rx-form"
+          }
+        ]
+      }
     ],
     sidebar: {
       "/blog/": [
@@ -31,26 +50,26 @@ module.exports = {
         {
           title: "自动化工具",
           collapsable: false,
-          children: ["swagger-to-mocks"],
-        },
-      ],
+          children: ["swagger-to-mocks"]
+        }
+      ]
     }
   },
   plugins: [
     [
-      '@vuepress/google-analytics',
+      "@vuepress/google-analytics",
       {
-        "ga": "UA-177434976-1"
+        ga: "UA-177434976-1"
       }
     ],
     [
       "@vuepress/pwa",
       {
         serviceWorker: true,
-        updatePopup: true,
-      },
+        updatePopup: true
+      }
     ],
     ["@vuepress/medium-zoom", true],
-    ["@vuepress/back-to-top", true],
-  ],
-}
+    ["@vuepress/back-to-top", true]
+  ]
+};
