@@ -58,7 +58,7 @@ module.exports = {
         {
           title: "自动化工具",
           collapsable: false,
-          children: ["tools_swagger-to-mocks"]
+          children: ["tools_swagger-to-mocks", "tools_ts-codegen"]
         }
       ]
     }

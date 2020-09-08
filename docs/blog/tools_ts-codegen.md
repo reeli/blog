@@ -1,4 +1,6 @@
-![bridge](搭建前后端之桥.assets/draw-bridge.gif)
+# 搭建前后端之桥
+
+![](../assets/ts-codegen-bridge.gif)
 
 
 
