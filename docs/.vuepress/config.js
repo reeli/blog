@@ -38,6 +38,14 @@ module.exports = {
     sidebar: {
       "/blog/": [
         {
+          title: "Framework",
+          collapsable: false,
+          children: [
+            "framework_react-hooks-use",
+            "framework_react-hooks-principle"
+          ]
+        },
+        {
           title: "性能优化",
           collapsable: false,
           children: []
@@ -45,12 +53,12 @@ module.exports = {
         {
           title: "打包和部署",
           collapsable: false,
-          children: ["webpack-tree-shaking"]
+          children: ["build_webpack-tree-shaking"]
         },
         {
           title: "自动化工具",
           collapsable: false,
-          children: ["swagger-to-mocks"]
+          children: ["tools_swagger-to-mocks"]
         }
       ]
     }
