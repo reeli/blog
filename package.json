@@ -1,24 +1,24 @@
 {
-  "name": "@reeli/books",
+  "name": "@reeli/blog",
   "version": "1.0.0",
   "description": "",
-  "main": "a.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
     "docs:dev": "vuepress dev docs",
     "docs:build": "vuepress build docs",
-    "deploy": "./deploy.sh"
+    "deploy": "npm run docs:build && npm run surge",
+    "surge": "npm install --global surge && surge --project ./docs/.vuepress/dist --domain reeli.surge.sh"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/reeli/books.git"
+    "url": "git+https://github.com/reeli/blog.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/reeli/books/issues"
+    "url": "https://github.com/reeli/blog/issues"
   },
-  "homepage": "https://github.com/reeli/books#readme"
+  "homepage": "https://github.com/reeli/blog#readme"
 }
