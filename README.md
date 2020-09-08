@@ -8,7 +8,7 @@
 ## 快速使用
 
 ```bash
-git clone https://github.com/reeli/blog.git
+git clone https://reeli.github.io/
 cd blog
 npm install
 npm start
