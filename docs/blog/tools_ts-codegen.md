@@ -1,6 +1,6 @@
 # 搭建前后端之桥
 
-![](docs/__assets__/tools-ts-codegen-bridge.gif)
+![](docs/assets/tools-ts-codegen-bridge.gif)
 
 
 

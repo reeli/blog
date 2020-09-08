@@ -14,7 +14,7 @@ RBAC（Role-Based Access Control）即：基于角色的访问控制。RBAC 认�
 
 相比于 ACL（Access Control List）直接为用户赋予权限的方式，RBAC 通过角色为用户和权限之间架起了一座桥梁，从而简化了用户和权限之间的关系，让权限配置更易于扩展和维护。
 
-![](docs/__assets__/models-authorization-rbac.png)
+![](../assets/models-authorization-rbac.png)
 
 ## 前端应用的权限控制
 
@@ -323,7 +323,7 @@ const ACPage = needPermissions(ACSection)(() => {}(
 
 
 
-![](docs/__assets__/models-authorization-example.png)
+![](../assets/models-authorization-example.png)
 
 
 
