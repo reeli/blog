@@ -5,6 +5,7 @@ module.exports = {
     lineNumbers: true
   },
   themeConfig: {
+    repo: "reeli/books",
     docsDir: "docs",
     editLinks: true,
     lastUpdated: "更新时间",
@@ -25,12 +26,12 @@ module.exports = {
         {
           title: "打包和部署",
           collapsable: false,
-          children: []
+          children: [ "webpack-tree-shaking"]
         },
         {
-          title: "博客",
+          title: "自动化工具",
           collapsable: false,
-          children: ["swagger-to-mocks", "webpack-tree-shaking"],
+          children: ["swagger-to-mocks"],
         },
       ],
     }
