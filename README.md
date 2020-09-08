@@ -3,12 +3,12 @@
 
 个人博客。记录实际开发中遇到的问题及解决方案，日常的思考和总结、面试知识点、读书笔记等。
 
-访问地址：https://reeli.github.io/blog
+访问地址：https://reeli.github.io/
 
 ## 快速使用
 
 ```bash
-git clone https://reeli.github.io/
+git clone https://github.com/reeli/blog.git
 cd blog
 npm install
 npm start
