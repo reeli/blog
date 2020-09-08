@@ -5,7 +5,7 @@ module.exports = {
     lineNumbers: true
   },
   themeConfig: {
-    repo: "reeli/books",
+    repo: "reeli/blog",
     docsDir: "docs",
     editLinks: true,
     lastUpdated: "更新时间",
