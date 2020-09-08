@@ -6,9 +6,12 @@
 
 - [React Hooks 你真的用对了吗？](https://reeli.github.io/blog/framework_react-hooks-use.html)
 
-### | 打包和部署
+### | 打包
 
 - [聊聊 Webpack Tree shaking](https://github.com/reeli/blog/blob/master/docs/blog/webpack-tree-shaking.md)
+
+### | 部署
+
 
 ### | 自动化工具
 
