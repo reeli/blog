@@ -2,7 +2,7 @@
 
 个人博客。记录实际开发中遇到的问题及解决方案，日常的思考和总结、面试知识点、读书笔记等。
 
-访问地址：http://reeli.surge.sh/blog/
+访问地址：https://reeli.github.io/blog
 
 ## 快速使用
 
