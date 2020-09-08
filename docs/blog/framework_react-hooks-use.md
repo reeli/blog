@@ -4,7 +4,7 @@
 
 
 
-# 问题一：我该使用单个 state 变量还是多个 state 变量？
+## 问题一：我该使用单个 state 变量还是多个 state 变量？
 
 `useState` 的出现，让我们可以使用多个 state 变量来保存 state，比如：
 
@@ -105,7 +105,7 @@ function usePosition() {
 
 
 
-# 问题二：deps 依赖过多，导致 Hooks 难以维护？
+## 问题二：deps 依赖过多，导致 Hooks 难以维护？
 
 使用 `useEffect`  hook 时，为了避免每次 render 都去执行它的 callback，我们通常会传入第二个参数「dependency array」（下面统称为依赖数组）。这样，只有当依赖数组发生变化时，才会执行 `useEffect` 的回调函数。
 
@@ -351,7 +351,7 @@ const useValues = () => {
 
 
 
-# 问题三：该不该使用 `useMemo`？
+## 问题三：该不该使用 `useMemo`？
 
 该不该使用 `useMemo`？对于这个问题，有的人从来没有思考过，有的人甚至不觉得这是个问题。不管什么情况，只要用 `useMemo` 或者 `useCallback` 「包裹一下」，似乎就能使应用远离性能的问题。但真的是这样吗？有的时候 `useMemo` 没有任何作用，甚至还会影响应用的性能。
 
@@ -548,7 +548,7 @@ const useData = () => {
 
 
 
-# 问题四：Hooks 能替代高阶组件和 Render Props 吗？
+## 问题四：Hooks 能替代高阶组件和 Render Props 吗？
 
 在 Hooks 出现之前，我们有两种方法可以复用组件逻辑：[Render Props](https://reactjs.org/docs/render-props.html) 和[高阶组件](https://reactjs.org/docs/higher-order-components.html)。但是这两种方法都可能会造成 JSX「嵌套地狱」的问题。Hooks 的出现，让组件逻辑的复用变得更简单，同时解决了「嵌套地狱」的问题。Hooks 之于 React 就像 async / await  之于 Promise 一样。
 
@@ -556,7 +556,7 @@ const useData = () => {
 
 
 
-## 高阶组件 HOC
+### 高阶组件 HOC
 
 高阶组件是一个函数，它接受一个组件作为参数，返回一个新的组件。
 
@@ -591,7 +591,7 @@ const RedButton = withStyles({
 
 
 
-## Render Props
+### Render Props
 
 Render Props 通过父组件将可复用逻辑封装起来，并把数据提供给子组件。至于子组件拿到数据之后要怎么渲染，完全由子组件自己决定，灵活性非常高。而高阶组件中，渲染结果是由父组件决定的。Render Props 不会产生新的组件，而且更加直观的体现了「父子关系」。
 
@@ -630,7 +630,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 
 
-## 小结
+### 小结
 
 没有 Hooks 之前，高阶组件和 Render Props 本质上都是将复用逻辑提升到父组件中。而 Hooks 出现之后，我们将复用逻辑提取到组件顶层，而不是强行提升到父组件中。这样就能够避免 HOC 和 Render Props 带来的「嵌套地狱」。但是，像 Context 的 `<Provider/>` 和 `<Consumer/>` 这样有父子层级关系（树状结构关系）的，还是只能使用 Render Props 或者 HOC。
 
@@ -652,7 +652,7 @@ Render Props 作为 JSX 的一部分，可以很方便地利用 React 生命周�
 
 
 
-# 问题五： 使用 Hooks 时还有哪些好的实践？
+## 问题五： 使用 Hooks 时还有哪些好的实践？
 
 1、若 Hook 类型相同，且依赖数组一致时，应该合并成一个 Hook。否则会产生更多开销。
 
@@ -817,7 +817,7 @@ export const useCount = () => {
 ```
 
 
-# 最后
+## 最后
 
 我们总结了在实践中一些常见的问题，并提出了一些解决方案。最后让我们再来回顾一下：
 
