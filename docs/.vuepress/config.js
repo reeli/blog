@@ -30,7 +30,7 @@ module.exports = {
         {
           title: "博客",
           collapsable: false,
-          children: ["swagger_2_mocks", "webpack"],
+          children: ["swagger-to-mocks", "webpack-tree-shaking"],
         },
       ],
     }
