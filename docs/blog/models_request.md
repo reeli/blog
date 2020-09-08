@@ -176,7 +176,7 @@ Promise 和 callback 都像「泼出去的水」，正所谓「覆水难收」�
 
 
 
-![](../assets/models-request-flow.png)
+![](docs/__assets__/models-request-flow.png)
 
 
 
@@ -320,7 +320,7 @@ const [requestA] = useRequest(A, {
 
 
 
-![](../assets/models-request-drawer.png)
+![](docs/__assets__/models-request-drawer.png)
 
 
 

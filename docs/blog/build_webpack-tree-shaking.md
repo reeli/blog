@@ -13,16 +13,16 @@ Tree Shaking 的字面意思是「摇树」，就是将项目中一些没有用�
 
 有的人又说了，我们可以使用 Uglify 或 Terser 这样的 JS 压缩工具来做死代码消除（Dead Code Elimination）。那些对应用程序不会造成任何影响或者不可达的代码会被删除，就像下面这样：
 
-![](docs/assets/build-webpack-tree-shaking-1.png)
+![](docs/__assets__/build-webpack-tree-shaking-1.png)
 
 既然 Uglify 可以消除死代码，为什么还需要 Tree Shaking？原因是 Uglify 目前不能跨文件去做死代码消除。Uglify 会对文件的代码进行静态分析，然后将死代码从抽象语法树（AST）中删除。静态分析是指不运行代码，只从字面量上对代码进行分析。因此在静态分析时，require 函数不会被运行，无法得知文件 require 或 export 了哪些模块。另外，Uglify 只会对单个文件的 AST 进行分析，无法得知 export 的模块是否会被其他文件使用。
 
-![](docs/assets/build-webpack-tree-shaking-2.png)
+![](docs/__assets__/build-webpack-tree-shaking-2.png)
 
 
 因此，在下面这种跨文件的场景下，UglifyJS 无法将没有用到的函数 `fn2` 消除。
 
-![](docs/assets/build-webpack-tree-shaking-3.png)
+![](docs/__assets__/build-webpack-tree-shaking-3.png)
 
 但 Tree Shaking 可以帮我们解决这个问题，接下来就让我们一起来看看 Tree Shaking 是如何解决这个问题的。
 
@@ -30,7 +30,7 @@ Tree Shaking 的字面意思是「摇树」，就是将项目中一些没有用�
 
 简单来说，Tree Shaking 的原理就是对你 import 的代码进行静态分析，如果发现没有被用到的部分就不再 export。没有 export 的代码就会被 Uglify 当成死代码删除。需要注意的是，Webpack 的 Tree Shaking 不会直接把没有用到的代码删除，真正删除代码的是 Uglify 或 Terser 这样的 JS 压缩工具。
 
-![](docs/assets/build-webpack-tree-shaking-4.png)
+![](docs/__assets__/build-webpack-tree-shaking-4.png)
 
 在上面的例子中，fn 文件 export 了两个函数 `fn1` 和 `fn2`，但是只有 `fn1` 被用到了。Tree Shaking 对代码进行静态分析，发现 `fn2` 没有被任何地方使用到，于是就不再 export `fn2` 。就像下面这样：
 
@@ -144,7 +144,7 @@ var Greet = /** @class */ (function () {
 
 接下来，我又拿 Babel 编译试了一下，结果如下：
 
-![](docs/assets/build-webpack-tree-shaking-5.png)
+![](docs/__assets__/build-webpack-tree-shaking-5.png)
 
 [Babel 传送门]([代码](https://babeljs.io/repl#?babili=false&browsers=&build=&builtIns=false&spec=false&loose=false&code_lz=MYGwhgzhAEDiBOBTRAXaBvAUNaBzJqAlgHa4AUAlBtjtEigK7zHQBEAFoiCAPasDcNAL6YhQA&debug=false&forceAllTransforms=false&shippedProposals=false&circleciRepo=&evaluate=false&fileSize=false&timeTravel=false&sourceType=module&lineWrap=true&presets=es2016%2Ces2017%2Ctypescript%2Cenv&prettier=false&targets=&version=7.7.4&externalPlugins=))
 
@@ -282,7 +282,7 @@ const a = /*#__PURE__*/setTitle()
 
 
 
-![](docs/assets/build-webpack-tree-shaking-6.png)
+![](docs/__assets__/build-webpack-tree-shaking-6.png)
 
 
 
